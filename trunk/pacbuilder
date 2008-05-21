@@ -1,5 +1,6 @@
 #!/bin/bash
-# By Andrea Cimitan.
+# PacBuilder
+# By Andrea Cimitan
 
 function environment()
 {
