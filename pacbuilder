@@ -210,6 +210,11 @@ function edit_pkgbuild()
 	fi
 }
 
+function get_pkgbuild()
+{
+	yaourt -G --noconfirm --nocolor $1 &> /dev/null
+}
+
 function get_pkginfo()
 {
 	unset arch pkgname pkgver pkgrel
@@ -254,7 +259,7 @@ function build_multiple_packages()
 		fi
 		mkdir -p ${TMP_PATH}/${CURRENT_PACKAGE}
 		cd ${TMP_PATH}/${CURRENT_PACKAGE}
-		yaourt -G --noconfirm --nocolor $CURRENT_PACKAGE &> /dev/null
+		get_pkgbuild ${CURRENT_PACKAGE}
 		add_carch
 		edit_pkgbuild
 		get_pkginfo
