@@ -97,6 +97,16 @@ function print_gcc_info()
 	printf "${COLOR_1M}Cxxflags:${COLOR_0M} ${CXXFLAGS}\n"
 }
 
+function check_log_file()
+{
+	if [ -f "${LOG_FILE_PACKAGES}" ]; then
+		printf "${COLOR_31M}==> $(gettext "ERROR:")${COLOR_0M}"
+		printf "${COLOR_1M} I was unable to find any package to build...";
+		printf "${COLOR_31M} exiting!{COLOR_0M}\n"
+		exit
+	fi
+}
+
 function add_carch()
 {
 	unset arch
@@ -136,9 +146,11 @@ function edit_pkgbuild()
 function build_packages()
 {
 	rm -rf ${TMP_PATH}/* &> /dev/null
-	ERROR_PACKAGES=""
+	check_log_file
+	sed -i '/^$/d' ${LOG_FILE_PACKAGES}
 	PACKAGES=`cat ${LOG_FILE_PACKAGES}`
 	NUM_PACKAGES=`cat ${LOG_FILE_PACKAGES} | wc -l`
+	ERROR_PACKAGES=""
 	CURRENT_INDEX=1
 	for CURRENT_PACKAGE in $PACKAGES; do
 		printf "${COLOR_32M}==>${COLOR_0M}"
