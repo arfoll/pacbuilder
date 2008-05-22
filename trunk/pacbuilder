@@ -394,6 +394,7 @@ function check_args()
 			--clean) clean ;;
 			--edit) VERBOSE="TRUE"; EDIT_PKGBUILD="TRUE" ;;
 			--gccinfo) print_gcc_info ;;
+			-h) print_usage; exit ;;
 			--help) print_usage; exit ;;
 			--verbose) VERBOSE="TRUE" ;;
 		esac
