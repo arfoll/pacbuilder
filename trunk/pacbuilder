@@ -235,7 +235,11 @@ function get_pkgbuild()
 	esac
 	if [ "$REPOSITORY" != "aur" ]; then
 		$SYNCCMD $SYNCARGS ${SYNCSERVER}::abs/${CARCH}/${REPOSITORY}/${1} ${TMP_PATH}
-	else
+		if [ -z ${TMP_PATH}/${1}/PKGBUILD ]; then
+			REPOSITORY="aur"
+		fi
+	fi
+	if [ "$REPOSITORY" == "aur" ]; then
 		cd ${TMP_PATH}
 		wget http://aur.archlinux.org/packages/${1}/${1}.tar.gz
 		tar xfz ./${1}.tar.gz
