@@ -208,7 +208,7 @@ function clean()
 {
 	printf "${COLOR_33M}==> $(gettext "WARNING:")${COLOR_0M}"
 	printf "${COLOR_1M} Do you want to delete previous build log?\n"
-	printf "You won't be able to resume that build anymore! (no/yes): ${COLOR_0M}"
+	printf "You won't be able to resume that build anymore! Are you sure? (no/yes): ${COLOR_0M}"
 	read DELETE_ANSWER
 	printf "\n"
 	if [ "$DELETE_ANSWER" == "yes" ]; then
