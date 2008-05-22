@@ -37,6 +37,9 @@ function environment()
 	SYNCCMD="rsync"
 	SYNCARGS="-mrtv --no-motd --delete-after --delete-excluded"
 	SYNCSERVER="rsync.archlinux.org"
+	
+	source /etc/makepkg.conf
+	[ -z "$CARCH" ] && CARCH="i686"
 
 	mkdir -p ${TMP_PATH}
 }
@@ -187,11 +190,9 @@ function print_type()
 function add_carch()
 {
 	unset arch
-	source ./PKGBUILD &> /dev/null
+	source ./PKGBUILD
 	if [ -z "$arch" ]; then
-		source /etc/makepkg.conf
-		[ -z "$CARCH" ] && CARCH="i686"
-		sed -i "/^build/iarch=('$CARCH')\n" ./PKGBUILD &> /dev/null
+		sed -i "/^build/iarch=('$CARCH')\n" ./PKGBUILD
 	fi
 }
 
@@ -251,9 +252,14 @@ function get_pkgbuild()
 function get_pkginfo()
 {
 	unset arch pkgname pkgver pkgrel
-	source ./PKGBUILD &> /dev/null
-	source /etc/makepkg.conf
-	[ -z "$CARCH" ] && CARCH="i686"
+	source ./PKGBUILD
+	arch=$CARCH
+}
+
+function get_makedepends()
+{
+	unset makedepends
+	source ./PKGBUILD
 	arch=$CARCH
 }
 
@@ -444,7 +450,7 @@ function sysupgrade()
 		                 -e "s/.pkg.tar.gz//" \
 		                 -e "s/^.*\///" \
 		                 -e "s/-[^-]*-[^-]*$//" \
-		           | sort --reverse`)
+		           | sort`)
 		for PACKAGE in ${PACKAGES[@]}; do
 			UPGRADABLE_PACKAGES=${UPGRADABLE_PACKAGES}$PACKAGE"\n"
 		done
