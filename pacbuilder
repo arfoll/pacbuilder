@@ -95,13 +95,15 @@ function check_args()
 		case $EXTRA_FLAG in
 			-h) print_help; exit ;;
 			--help) print_help; exit ;;
+			--verbose) VERBOSE="TRUE" ;;
+			--edit) VERBOSE="TRUE"; EDIT_PKGBUILD="TRUE" ;;
+			--gccinfo) print_gcc_info ;;
+			--clean) clean ;;
+			--sysupgrade) SYSUPGRADE="TRUE" ;;
+			--upgrade) SYSUPGRADE="TRUE" ;;
 			--deps) add_type "deps" ;;
 			--explicit) add_type "explicit" ;;
 			--world) add_type "world" ;;
-			--clean) clean ;;
-			--edit) VERBOSE="TRUE"; EDIT_PKGBUILD="TRUE" ;;
-			--gccinfo) print_gcc_info ;;
-			--verbose) VERBOSE="TRUE" ;;
 		esac
 	done
 }
@@ -136,6 +138,8 @@ function print_help()
 	printf "    --unstable   recompile packages in unstable\n"
 	printf "    --community  recompile packages in community\n"
 	printf "    --aur        recompile packages in aur\n"
+	printf "  Other operations:\n"
+	printf "    --upgrade    build the updated packages\n"
 }
 
 function print_gcc_info()
@@ -224,7 +228,7 @@ function build_type()
 		print_repo "$TARGET_REPOSITORY\n"
 		printf "Fetching repositories, this may take a long time..."
 		match_repository $PACKAGES
-		printf "${COLOR_32M} done!\n"
+		printf "${COLOR_32M} done!${COLOR_0M}\n"
 		printf "\n"
 	else
 		print_repo "build from every repository\n"
@@ -333,9 +337,11 @@ function match_repository()
 		done
 	done
 	echo -e $JOINT_PACKAGES > ${LOG_FILE_PACKAGES}
+	sed -i '/^$/d' ${LOG_FILE_PACKAGES}
+	PACKAGES=`cat ${LOG_FILE_PACKAGES}`
 }
 
-# END_SECTION - manage package installation
+# END_SECTION - select packages
 # BEGIN_SECTION - start building by type
 
 function read_type()
@@ -361,22 +367,51 @@ function resume()
 {
 	if [ -f ${LOG_FILE_PACKAGES} ]; then
 		printf "${COLOR_33M}==> ATTENTION:${COLOR_0M}"
-		printf "${COLOR_1M} Previous build detected. Do you want to resume? (yes/no): ${COLOR_0M}"
+		printf "${COLOR_1M} Previous build detected. Do you want to resume? (yes/no):${COLOR_0M} "
 		read RESUME_ANSWER
-		printf "\n"
 		if [ "$RESUME_ANSWER" != "no" ]; then
+			printf "\n"
 			printf "Resuming...\n"
 			build_multiple_packages
 			exit
 		else
 			printf "${COLOR_33M}==> ATTENTION:${COLOR_0M}"
-			printf "${COLOR_1M} Your previous build will be overwritten. Continue? (no/yes): ${COLOR_0M}"
+			printf "${COLOR_1M} Your previous build will be overwritten. Continue? (no/yes):${COLOR_0M} "
 			read RESUME_ANSWER
+			printf "\n"
 			if [ "$RESUME_ANSWER" != "yes" ]; then
 				printf "Exiting...\n"
 				exit
 			fi
 		fi
+	fi
+}
+
+function sysupgrade()
+{
+	if [ "$SYSUPGRADE" == "TRUE" ]; then
+		printf "Refreshing pacman database, please wait..."
+		PACKAGES=(`pacman --sync --refresh --sysupgrade --print-uris \
+		           | grep "^\(ftp:\/\/\|http:\/\/\|file:\/\/\)" \
+		           | sed -e "s/-i686.pkg.tar.gz$//" \
+		                 -e "s/-x86_64.pkg.tar.gz$//" \
+		                 -e "s/-any.pkg.tar.gz$//" \
+		                 -e "s/.pkg.tar.gz//" \
+		                 -e "s/^.*\///" \
+		                 -e "s/-[^-]*-[^-]*$//" \
+		           | sort --reverse`)
+		for PACKAGE in ${PACKAGES[@]}; do
+			UPGRADABLE_PACKAGES=${UPGRADABLE_PACKAGES}$PACKAGE"\n"
+		done
+		echo -e $UPGRADABLE_PACKAGES > ${LOG_FILE_PACKAGES}
+		sed -i '/^$/d' ${LOG_FILE_PACKAGES}
+		PACKAGES=`cat ${LOG_FILE_PACKAGES}`
+		TYPES_ENABLED="TRUE"
+		printf "${COLOR_32M} done!${COLOR_0M}\n"
+		printf "\n"
+		print_type "both deps and explicit packages"
+		build_type
+		exit
 	fi
 }
 
@@ -416,7 +451,7 @@ function type_world()
 	DONE_WORLD="TRUE"
 }
 
-# END_SECTION - start building by type
+# END_SECTION - select packages
 # BEGIN_SECTION - application run
 
 function main()
@@ -427,6 +462,7 @@ function main()
 	colorize_output
 	print_title
 	resume
+	sysupgrade
 	read_type
 }
 
