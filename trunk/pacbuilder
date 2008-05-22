@@ -199,6 +199,14 @@ function resume()
 			printf "Resuming...\n"
 			build_packages
 			exit
+		else
+			printf "${COLOR_33M}==> $(gettext "ATTENTION:")${COLOR_0M}"
+			printf "${COLOR_1M} Your previous build will be overwritten. Continue? (no/yes): ${COLOR_0M}"
+			read RESUME_ANSWER
+			if [ "$RESUME_ANSWER" != "yes" ]; then
+				printf "Exiting...\n"
+				exit
+			fi
 		fi
 	fi
 }
