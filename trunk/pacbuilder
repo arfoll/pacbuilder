@@ -106,10 +106,6 @@ function add_carch()
 	fi
 }
 
-function get_pkgbuild()
-{
-}
-
 function get_pkginfo()
 {
 	unset arch pkgname pkgver pkgrel
