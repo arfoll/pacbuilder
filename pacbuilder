@@ -34,6 +34,9 @@ function environment()
 	TMP_PATH=/tmp/${COMMAND_BIN}/build
 	LOG_FILE_PACKAGES=/var/log/${COMMAND_BIN}-packages.log
 	ABS_REPOS_URL="http://repos.archlinux.org/viewvc.cgi"
+	SYNCCMD="rsync"
+	SYNCARGS="-mrtv --no-motd --delete-after --delete-excluded"
+	SYNCSERVER="rsync.archlinux.org"
 
 	mkdir -p ${TMP_PATH}
 }
@@ -212,11 +215,16 @@ function edit_pkgbuild()
 
 function get_pkgbuild()
 {
-	REPOSITORY=`LANG=C pacman -Si $1 2> /dev/null | grep -m1 Repository | awk -F": " '{ print $2 }'`
+	REPOSITORY=`LANG=C pacman -Si ${1} 2> /dev/null | grep -m1 Repository | awk -F": " '{ print $2 }'`
 	if [ "$REPOSITORY" == "" ]; then
 		REPOSITORY="aur"
 	fi
-	yaourt -G --noconfirm --nocolor $1 &> /dev/null
+	if [ "$REPOSITORY" != "aur" ]; then
+		$SYNCCMD $SYNCARGS ${SYNCSERVER}::abs/${CARCH}/${REPOSITORY}/${1} ${TMP_PATH}
+	else
+		wget http://aur.archlinux.org/packages/${1}/${1}.tar.gz
+	fi
+	#yaourt -G --noconfirm --nocolor $1 &> /dev/null
 }
 
 function get_pkginfo()
