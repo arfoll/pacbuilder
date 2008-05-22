@@ -59,7 +59,6 @@ function print_usage()
 	printf "OPTIONS:\n"
 	printf "  General:\n"
 	printf "    --help       print this help\n"
-	printf "    --new        do not resume\n"
 	printf "    --clean      remove previous log\n"
 	printf "    --gccinfo    print current compilation flags\n"
 	printf "    --nocolor    don't use any color\n"
