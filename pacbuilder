@@ -212,6 +212,10 @@ function edit_pkgbuild()
 
 function get_pkgbuild()
 {
+	REPOSITORY=`LANG=C pacman -Si $1 2> /dev/null | grep -m1 Repository | awk -F": " '{ print $2 }'`
+	if [ "$REPOSITORY" == "" ]; then
+		REPOSITORY="aur"
+	fi
 	yaourt -G --noconfirm --nocolor $1 &> /dev/null
 }
 
