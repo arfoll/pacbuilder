@@ -60,7 +60,7 @@ function print_usage()
 	printf "  General:\n"
 	printf "    --help       print this help\n"
 	printf "    --clean      remove previous log\n"
-	printf "    --edit       be verbose and edit PKGBUILD\N"
+	printf "    --edit       be verbose and edit PKGBUILD\n"
 	printf "    --gccinfo    print current compilation flags\n"
 	printf "    --nocolor    don't use any color\n"
 	printf "    --verbose    print makepkg output\n"
@@ -129,15 +129,17 @@ function get_pkginfo()
 
 function edit_pkgbuild()
 {
-	if [ "$VERBOSE" == "TRUE" ] && [ "$EDIT_PKGBUILD" == "TRUE" ]; then
-		if [ -f ./PKGBUILD ]; then
-			printf "\n"
-			printf "${COLOR_33M}==> $(gettext "EDIT PKGBUILD:")${COLOR_0M}"
-			printf "${COLOR_1M} Do you want to edit this PKGBUILD? (yes/no): ${COLOR_0M}"
-			read EDIT_ANSWER
-			if [ "$EDIT_ANSWER" != "no" ]; then
-				[ -z "$EDITOR" ] && EDITOR=nano
-				$EDITOR ./PKGBUILD
+	if [ "$VERBOSE" == "TRUE" ]; then
+		printf "\n"
+		if [ "$EDIT_PKGBUILD" == "TRUE" ]; then
+			if [ -f ./PKGBUILD ]; then
+				printf "${COLOR_33M}==> $(gettext "EDIT PKGBUILD:")${COLOR_0M}"
+				printf "${COLOR_1M} Do you want to edit this PKGBUILD? (yes/no): ${COLOR_0M}"
+				read EDIT_ANSWER
+				if [ "$EDIT_ANSWER" != "no" ]; then
+					[ -z "$EDITOR" ] && EDITOR=nano
+					$EDITOR ./PKGBUILD
+				fi
 			fi
 		fi
 	fi
@@ -168,7 +170,6 @@ function build_packages()
 		if [ "$VERBOSE" != "TRUE" ]; then
 			makepkg --asroot --noconfirm &> /dev/null
 		else
-			printf "\n"
 			if [ "$NO_COLOR" != "TRUE" ]; then
 				makepkg --asroot --noconfirm
 			else
