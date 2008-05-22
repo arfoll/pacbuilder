@@ -213,6 +213,15 @@ function edit_pkgbuild()
 	fi
 }
 
+function get_community_category()
+{
+	AUR_ID=`wget -q -O - "http://aur.archlinux.org/rpc.php?type=info&arg=${1}" \
+	        | sed -e 's/^.*{"ID":"//' -e 's/",".*$//' | sed '/^$/d'`
+	CATEGORY=`wget -q "http://aur.archlinux.org/packages.php?ID=${AUR_ID}" -O - \
+	          | grep 'community ::' | sed 's|<[^<]*>||g' | awk '{print $3}'`
+	echo $CATEGORY
+}
+
 function get_pkgbuild()
 {
 	REPOSITORY=`LANG=C pacman -Si ${1} 2> /dev/null | grep -m1 Repository | awk -F": " '{ print $2 }'`
@@ -221,6 +230,7 @@ function get_pkgbuild()
 		extra) ;;
 		testing) ;;
 		unstable) ;;
+		community) REPOSITORY=${REPOSITORY}/`get_community_category ${1}` ;;
 		*) REPOSITORY="aur" ;;
 	esac
 	if [ "$REPOSITORY" != "aur" ]; then
@@ -232,7 +242,6 @@ function get_pkgbuild()
 		rm -rf ./${1}.tar.gz
 	fi
 	cd ${TMP_PATH}/${1}
-	#yaourt -G --noconfirm --nocolor $1 &> /dev/null
 }
 
 function get_pkginfo()
@@ -277,7 +286,7 @@ function build_multiple_packages()
 		if [ "`pacman -Qd $CURRENT_PACKAGE | awk -F" " '{print $1}'`" != "" ]; then
 			EXTRA_PACMAN_OPTIONS="--asdeps"
 		fi
-		get_pkgbuild ${CURRENT_PACKAGE}
+		get_pkgbuild ${CURRENT_PACKAGE} &> /dev/null
 		add_carch
 		edit_pkgbuild
 		get_pkginfo
@@ -353,6 +362,7 @@ function match_repository()
 			extra) ;;
 			testing) ;;
 			unstable) ;;
+			community) ;;
 			*) REPOSITORY="aur" ;;
 		esac
 		for CURRENT_REPOSITORY in $REPOSITORY; do
