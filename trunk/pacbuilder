@@ -108,34 +108,6 @@ function add_carch()
 
 function get_pkgbuild()
 {
-#	if [ "$repository" = "community" ]; then
-#		url="$ABS_REPOS_URL/community/$category/$PKG/?root=community"
-#	else
-#		# Grab link to download pkgbuild from new repos.archlinux.org
-#		source /etc/makepkg.conf
-#		[ -z "$CARCH" ] && CARCH="i686"
-#		wget -q "${ABS_REPOS_URL}/$CURRENT_PACKAGE/repos/" -O - > "${TMP_PATH}/page.tmp"
-#		repos=( `grep "name=.*i686" "${TMP_PATH}/page.tmp" | awk -F "\"" '{print $2}'` )
-#		# if package exists in testing branch and in current branch, select the right url
-#		if [ "$repository" = "testing" ]; then
-#			url="$ABS_REPOS_URL/$PKG/repos/${repos[1]}/"
-#		else
-#			url="$ABS_REPOS_URL/$PKG/repos/${repos[0]}/"
-#		fi
-#	fi
-#	wget -q "$url" -O "${TMP_PATH}/page.tmp"
-#	files=( `grep "name=.*href=\"/viewvc.cgi/" "${TMP_PATH}/page.tmp" | awk -F "\"" '{print $2}'`)
-#	for file in ${files[@]}; do
-#		if [ "$repository" = "community" ]; then
-#			wget --tries=3 --waitretry=3 --no-check-certificate "$ABS_REPOS_URL/community/$category/$PKG/$file?root=community\&view=co" -O $file
-#		else
-#			wget --tries=3 --waitretry=3 --no-check-certificate "${url}${file}?view=co" -O $file
-#		fi
-#	done
-#	else
-#		wget -q "http://aur.archlinux.org/packages/$CURRENT_PACKAGE/$CURRENT_PACKAGE.tar.gz"
-#		tar xfvz "$CURRENT_PACKAGE.tar.gz" > /dev/null
-#	fi
 }
 
 function get_pkginfo()
