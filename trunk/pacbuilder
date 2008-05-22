@@ -9,7 +9,8 @@ function environment()
 	COMMAND_BIN="pacbuilder"
 	COMMAND_NAME="PacBuilder"
 	LICENSE="GPLv3"
-	TMP_PATH=/tmp/${COMMAND_BIN}
+	TMP_PATH=/tmp/${COMMAND_BIN}/build
+	LOG_FILE_PACKAGES=/var/log/${COMMAND_BIN}-packages.log
 	ABS_REPOS_URL="http://repos.archlinux.org/viewvc.cgi"
 
 	if [ "$NO_COLOR" != "TRUE" ]; then
@@ -101,7 +102,6 @@ function add_carch()
 	if [ -z "$arch" ]; then
 		source /etc/makepkg.conf
 		[ -z "$CARCH" ] && CARCH="i686"
-		#printf "${COLOR_33M}adding arch=(${CARCH})${COLOR_0M}..."
 		sed -i "/^build/iarch=('$CARCH')\n" ./PKGBUILD
 	fi
 }
@@ -119,6 +119,8 @@ function build_packages()
 {
 	rm -rf ${TMP_PATH}/*
 	ERROR_PACKAGES=""
+	PACKAGES=`cat ${LOG_FILE_PACKAGES}`
+	NUM_PACKAGES=`cat ${LOG_FILE_PACKAGES} | wc -l`
 	CURRENT_INDEX=1
 	for CURRENT_PACKAGE in $PACKAGES; do
 		printf "${COLOR_32M}==>${COLOR_0M}"
@@ -149,6 +151,7 @@ function build_packages()
 		CHECK_INSTALL=`grep upgraded /var/log/pacman.log | tail -n1 /var/log/pacman.log | grep $CURRENT_PACKAGE | wc -l`
 		if [ "$CHECK_INSTALL" == "1" ]; then
 			rm -rf ${TMP_PATH}/${CURRENT_PACKAGE}
+			sed -i '/'${CURRENT_PACKAGE}'/d' ${LOG_FILE_PACKAGES}
 			printf "${COLOR_32M} installed!${COLOR_0M}\n"
 		else
 			ERROR_PACKAGES=${ERROR_PACKAGES}$CURRENT_PACKAGE" "
@@ -165,21 +168,34 @@ function match_repository()
 	JOINT_PACKAGES=""
 	CURRENT_INDEX=0
 	for CURRENT_PACKAGE in $@; do
-		REPOSITORY=`LANG=C pacman -Si $CURRENT_PACKAGE 2> /dev/null | grep Repository | awk -F": " '{ print $2 }'`
+		REPOSITORY=`LANG=C pacman -Si $CURRENT_PACKAGE 2> /dev/null | grep -m1 Repository | awk -F": " '{ print $2 }'`
 		if [ "$REPOSITORY" == "" ]; then
 			REPOSITORY="aur"
 		fi
 		for CURRENT_REPOSITORY in $REPOSITORY; do
 			for CURRENT_TARGET_REPOSITORY in $TARGET_REPOSITORY; do
 				if [ "$CURRENT_REPOSITORY" == "$CURRENT_TARGET_REPOSITORY" ]; then
-					JOINT_PACKAGES=${JOINT_PACKAGES}$CURRENT_PACKAGE" "
-					(( CURRENT_INDEX++ ))
+					JOINT_PACKAGES=${JOINT_PACKAGES}$CURRENT_PACKAGE"\n"
 				fi
 			done
 		done
 	done
-	NUM_PACKAGES=$CURRENT_INDEX
-	PACKAGES=$JOINT_PACKAGES
+	echo -e $JOINT_PACKAGES > ${LOG_FILE_PACKAGES}
+}
+
+function resume()
+{
+	if [ -f ${LOG_FILE_PACKAGES} ]; then
+		printf "${COLOR_33M}==> $(gettext "ATTENTION:")${COLOR_0M}"
+		printf "${COLOR_1M} Previous build detected. Do you want to resume? (no/yes): ${COLOR_0M}"
+		read RESUME_ANSWER
+		printf "\n"
+		if [ "$RESUME_ANSWER" == "yes" ]; then
+			printf "Resuming...\n"
+			build_packages
+			exit
+		fi
+	fi
 }
 
 function build()
@@ -198,8 +214,8 @@ function build()
 
 function deps()
 {
+	pacman -Qd | awk -F" " '{print $1}' > ${LOG_FILE_PACKAGES}
 	PACKAGES=`pacman -Qd | awk -F" " '{print $1}'`
-	NUM_PACKAGES=`pacman -Qd | awk -F" " '{print $1}' | wc -l`
 	if [ "$DONE_DEPS" != "TRUE" ]; then
 		print_type "deps packages"
 		build
@@ -209,8 +225,8 @@ function deps()
 
 function explicit()
 {
+	pacman -Qe | awk -F" " '{print $1}' > ${LOG_FILE_PACKAGES}
 	PACKAGES=`pacman -Qe | awk -F" " '{print $1}'`
-	NUM_PACKAGES=`pacman -Qe | awk -F" " '{print $1}' | wc -l`
 	EXTRA_YAOURT_OPTIONS=""
 	if [ "$DONE_EXPLICIT" != "TRUE" ]; then
 		print_type "explicit packages"
@@ -221,8 +237,8 @@ function explicit()
 
 function world()
 {
+	pacman -Q | awk -F" " '{print $1}' > ${LOG_FILE_PACKAGES}
 	PACKAGES=`pacman -Q | awk -F" " '{print $1}'`
-	NUM_PACKAGES=`pacman -Q | awk -F" " '{print $1}' | wc -l`
 	if [ "$DONE_WORLD" != "TRUE" ]; then
 		print_type "both deps and explicit packages"
 		build
@@ -338,6 +354,7 @@ function main()
 	check_uid
 	print_title
 	check_args $@
+	resume
 	read_flags
 }
 
