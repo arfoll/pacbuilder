@@ -165,8 +165,8 @@ function build_packages()
 		cd ${TMP_PATH}/${CURRENT_PACKAGE}
 		yaourt -G --noconfirm --nocolor $CURRENT_PACKAGE &> /dev/null
 		add_carch
-		get_pkginfo
 		edit_pkgbuild
+		get_pkginfo
 		if [ "$VERBOSE" != "TRUE" ]; then
 			makepkg --asroot --noconfirm &> /dev/null
 		else
