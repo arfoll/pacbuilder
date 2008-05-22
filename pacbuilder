@@ -278,19 +278,16 @@ function read_flags()
 		printf "No type specified, assuming world...\n\n"
 		ENABLED_TYPES="world"
 		sleep 1
-	fi
-	if [ "$TYPES_ENABLED" != "" ] && [ "$REPOSITORY_ENABLED" == "" ]; then
+	elif [ "$TYPES_ENABLED" != "" ] && [ "$REPOSITORY_ENABLED" == "" ]; then
 		printf "No repository specified, build all...\n\n"
 		sleep 1
 	fi
 	for EXTRA_TYPE in $ENABLED_TYPES; do
-		if [ "$EXTRA_TYPE" == "deps" ]; then
-			deps
-		elif [ "$EXTRA_TYPE" == "explicit" ]; then
-			explicit
-		elif [ "$EXTRA_TYPE" == "world" ]; then
-			world
-		fi
+		case $EXTRA_TYPE in
+			deps) deps ;;
+			explicit) explicit ;;
+			world) world ;;
+		esac
 	done
 }
 
@@ -341,36 +338,25 @@ function check_args()
 		exit
 	fi
 	for EXTRA_FLAG in $@; do
-		if [ "$EXTRA_FLAG" == "--core" ]; then
-			add_repository "core"
-		elif [ "$EXTRA_FLAG" == "--extra" ]; then
-			add_repository "extra"
-		elif [ "$EXTRA_FLAG" == "--testing" ]; then
-			add_repository "testing"
-		elif [ "$EXTRA_FLAG" == "--unstable" ]; then
-			add_repository "unstable"
-		elif [ "$EXTRA_FLAG" == "--community" ]; then
-			add_repository "community"
-		elif [ "$EXTRA_FLAG" == "--aur" ]; then
-			add_repository "aur"
-		fi
+		case $EXTRA_FLAG in
+			--core) add_repository "core" ;;
+			--extra) add_repository "extra" ;;
+			--testing) add_repository "testing" ;;
+			--unstable) add_repository "unstable" ;;
+			--community) add_repository "community" ;;
+			--aur) add_repository "aur" ;;
+		esac
 	done
 	for EXTRA_FLAG in $@; do
-		if [ "$EXTRA_FLAG" == "--deps" ]; then
-			add_type "deps"
-		elif [ "$EXTRA_FLAG" == "--explicit" ]; then
-			add_type "explicit"
-		elif [ "$EXTRA_FLAG" == "--world" ]; then
-			add_type "world"
-		elif [ "$EXTRA_FLAG" == "--clean" ]; then
-			clean
-		elif [ "$EXTRA_FLAG" == "--help" ]; then
-			print_usage
-		elif [ "$EXTRA_FLAG" == "--gccinfo" ]; then
-			print_gcc_info
-		elif [ "$EXTRA_FLAG" == "--verbose" ]; then
-			VERBOSE="TRUE"
-		fi
+		case $EXTRA_FLAG in
+			--deps) add_type "deps" ;;
+			--explicit) add_type "explicit" ;;
+			--world) add_type "world" ;;
+			--clean) clean ;;
+			--gccinfo) print_gcc_info ;;
+			--help) print_usage; exit ;;
+			--verbose) VERBOSE="TRUE" ;;
+		esac
 	done
 }
 
