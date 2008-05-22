@@ -2,6 +2,8 @@
 # PacBuilder
 # By Andrea Cimitan
 
+# BEGIN - environment checks
+
 function environment()
 {
 	AUTHOR_NAME="Andrea Cimitan"
@@ -33,6 +35,93 @@ function check_uid()
 	fi
 }
 
+# END - environment checks
+# BEGIN - command line options
+
+function add_repository()
+{
+	ALREADY_ADDED="FALSE"
+	for ADDED_REPOSITORY in $TARGET_REPOSITORY; do
+		if [ "$ADDED_REPOSITORY" == "$1" ]; then
+			ALREADY_ADDED="TRUE"
+		fi
+	done
+	if [ "$ALREADY_ADDED" != "TRUE" ]; then
+		TARGET_REPOSITORY=${TARGET_REPOSITORY}$1" "
+		REPOSITORY_ENABLED="TRUE"
+	fi
+}
+
+function add_type()
+{
+	ALREADY_ADDED="FALSE"
+	for ADDED_TYPE in $ENABLED_TYPES; do
+		if [ "$ADDED_TYPE" == "$1" ]; then
+			ALREADY_ADDED="TRUE"
+		fi
+	done
+	if [ "$ALREADY_ADDED" != "TRUE" ]; then
+		ENABLED_TYPES=${ENABLED_TYPES}$1" "
+		TYPES_ENABLED="TRUE"
+	fi
+}
+
+function check_args()
+{
+	if [ -z "$1" ]; then
+		NO_COLOR="TRUE"
+		print_usage
+		exit
+	fi
+	for EXTRA_FLAG in $@; do
+		if [ "$EXTRA_FLAG" == "--nocolor" ]; then
+			NO_COLOR="TRUE"
+		fi
+	done
+	for EXTRA_FLAG in $@; do
+		case $EXTRA_FLAG in
+			--core) add_repository "core" ;;
+			--extra) add_repository "extra" ;;
+			--testing) add_repository "testing" ;;
+			--unstable) add_repository "unstable" ;;
+			--community) add_repository "community" ;;
+			--aur) add_repository "aur" ;;
+		esac
+	done
+	for EXTRA_FLAG in $@; do
+		case $EXTRA_FLAG in
+			-h) print_usage; exit ;;
+			--help) print_usage; exit ;;
+			--deps) add_type "deps" ;;
+			--explicit) add_type "explicit" ;;
+			--world) add_type "world" ;;
+			--clean) clean ;;
+			--edit) VERBOSE="TRUE"; EDIT_PKGBUILD="TRUE" ;;
+			--gccinfo) print_gcc_info ;;
+			--verbose) VERBOSE="TRUE" ;;
+		esac
+	done
+}
+
+# END - command line options
+# BEGIN - print to stdout
+
+function print_gcc_info()
+{
+	source /etc/makepkg.conf
+
+	printf "${COLOR_1M}Carch:${COLOR_0M} ${CARCH}\n"
+	printf "${COLOR_1M}Chost:${COLOR_0M} ${CHOST}\n"
+	printf "${COLOR_1M}Cflags:${COLOR_0M} ${CFLAGS}\n"
+	printf "${COLOR_1M}Cxxflags:${COLOR_0M} ${CXXFLAGS}\n"
+	printf "\n"
+}
+
+function print_repo()
+{
+	printf "${COLOR_1M}Repo:${COLOR_0M} $1\n"
+}
+
 function print_title()
 {
 	if [ "$NO_COLOR" != "TRUE" ]; then
@@ -46,6 +135,11 @@ function print_title()
 		printf "\033[1;0m-------------------------------\n"
 		printf "\n"
 	fi
+}
+
+function print_type()
+{
+	printf "${COLOR_1M}Type:${COLOR_0M} $1\n"
 }
 
 function print_usage()
@@ -77,35 +171,8 @@ function print_usage()
 	printf "    --aur        recompile packages in aur\n"
 }
 
-function print_repo()
-{
-	printf "${COLOR_1M}Repo:${COLOR_0M} $1\n"
-}
-
-function print_type()
-{
-	printf "${COLOR_1M}Type:${COLOR_0M} $1\n"
-}
-
-function print_gcc_info()
-{
-	source /etc/makepkg.conf
-
-	printf "${COLOR_1M}Carch:${COLOR_0M} ${CARCH}\n"
-	printf "${COLOR_1M}Chost:${COLOR_0M} ${CHOST}\n"
-	printf "${COLOR_1M}Cflags:${COLOR_0M} ${CFLAGS}\n"
-	printf "${COLOR_1M}Cxxflags:${COLOR_0M} ${CXXFLAGS}\n"
-}
-
-function check_log_file()
-{
-	if [ -z "${LOG_FILE_PACKAGES}" ]; then
-		printf "${COLOR_31M}==> $(gettext "ERROR:")${COLOR_0M}"
-		printf "${COLOR_1M} I was unable to find any package to build...";
-		printf "${COLOR_31M} exiting!${COLOR_0M}\n"
-		exit
-	fi
-}
+# END - print to stdout
+# BEGIN - pkgbuild parsing and editing
 
 function add_carch()
 {
@@ -116,15 +183,6 @@ function add_carch()
 		[ -z "$CARCH" ] && CARCH="i686"
 		sed -i "/^build/iarch=('$CARCH')\n" ./PKGBUILD
 	fi
-}
-
-function get_pkginfo()
-{
-	unset arch pkgname pkgver pkgrel
-	source ./PKGBUILD &> /dev/null
-	source /etc/makepkg.conf
-	[ -z "$CARCH" ] && CARCH="i686"
-	arch=$CARCH
 }
 
 function edit_pkgbuild()
@@ -145,7 +203,33 @@ function edit_pkgbuild()
 	fi
 }
 
-function build_packages()
+function get_pkginfo()
+{
+	unset arch pkgname pkgver pkgrel
+	source ./PKGBUILD &> /dev/null
+	source /etc/makepkg.conf
+	[ -z "$CARCH" ] && CARCH="i686"
+	arch=$CARCH
+}
+
+# END - pkgbuild parsing and editing
+# BEGIN - manage package installation
+
+function build()
+{
+	if [ "$TARGET_REPOSITORY" != "" ]; then
+		print_repo "$TARGET_REPOSITORY\n"
+		printf "Fetching repositories, this may take a long time..."
+		match_repository $PACKAGES
+		printf "${COLOR_32M} done!\n"
+		printf "\n"
+	else
+		print_repo "build from every repository\n"
+	fi
+	build_multiple_packages
+}
+
+function build_multiple_packages()
 {
 	rm -rf ${TMP_PATH}/* &> /dev/null
 	check_log_file
@@ -199,6 +283,35 @@ function build_packages()
 	fi
 }
 
+function check_log_file()
+{
+	if [ -z "${LOG_FILE_PACKAGES}" ]; then
+		printf "${COLOR_31M}==> $(gettext "ERROR:")${COLOR_0M}"
+		printf "${COLOR_1M} I was unable to find any package to build...";
+		printf "${COLOR_31M} exiting!${COLOR_0M}\n"
+		exit
+	fi
+}
+
+function clean()
+{
+	printf "${COLOR_33M}==> $(gettext "WARNING:")${COLOR_0M}"
+	printf "${COLOR_1M} Do you want to delete your previous build log?\n"
+	printf "You will not be able to resume it in the future. Are you sure? (no/yes): ${COLOR_0M}"
+	read DELETE_ANSWER
+	printf "\n"
+	if [ "$DELETE_ANSWER" == "yes" ]; then
+			delete_log
+	fi
+}
+
+function delete_log()
+{
+	if [ -f ${LOG_FILE_PACKAGES} ]; then
+		rm -rf ${LOG_FILE_PACKAGES} &> /dev/null
+	fi
+}
+
 function match_repository()
 {
 	JOINT_PACKAGES=""
@@ -217,6 +330,51 @@ function match_repository()
 		done
 	done
 	echo -e $JOINT_PACKAGES > ${LOG_FILE_PACKAGES}
+}
+
+# END - manage package installation
+# BEGIN - start building by type
+
+function deps()
+{
+	pacman -Qd | awk -F" " '{print $1}' > ${LOG_FILE_PACKAGES}
+	PACKAGES=`pacman -Qd | awk -F" " '{print $1}'`
+	if [ "$DONE_DEPS" != "TRUE" ]; then
+		print_type "deps packages"
+		build
+	fi
+	DONE_DEPS="TRUE"
+}
+
+function explicit()
+{
+	pacman -Qe | awk -F" " '{print $1}' > ${LOG_FILE_PACKAGES}
+	PACKAGES=`pacman -Qe | awk -F" " '{print $1}'`
+	EXTRA_YAOURT_OPTIONS=""
+	if [ "$DONE_EXPLICIT" != "TRUE" ]; then
+		print_type "explicit packages"
+		build
+	fi
+	DONE_EXPLICIT="TRUE"
+}
+
+function read_type()
+{
+	if [ "$TYPES_ENABLED" == "" ] && [ "$REPOSITORY_ENABLED" != "" ]; then
+		printf "No type specified, assuming world...\n\n"
+		ENABLED_TYPES="world"
+		sleep 1
+	elif [ "$TYPES_ENABLED" != "" ] && [ "$REPOSITORY_ENABLED" == "" ]; then
+		printf "No repository specified, build all...\n\n"
+		sleep 1
+	fi
+	for EXTRA_TYPE in $ENABLED_TYPES; do
+		case $EXTRA_TYPE in
+			deps) deps ;;
+			explicit) explicit ;;
+			world) world ;;
+		esac
+	done
 }
 
 function resume()
@@ -242,62 +400,6 @@ function resume()
 	fi
 }
 
-function clean()
-{
-	printf "${COLOR_33M}==> $(gettext "WARNING:")${COLOR_0M}"
-	printf "${COLOR_1M} Do you want to delete your previous build log?\n"
-	printf "You will not be able to resume it in the future. Are you sure? (no/yes): ${COLOR_0M}"
-	read DELETE_ANSWER
-	printf "\n"
-	if [ "$DELETE_ANSWER" == "yes" ]; then
-			delete_log
-	fi
-}
-
-function delete_log()
-{
-	if [ -f ${LOG_FILE_PACKAGES} ]; then
-		rm -rf ${LOG_FILE_PACKAGES} &> /dev/null
-	fi
-}
-
-function build()
-{
-	if [ "$TARGET_REPOSITORY" != "" ]; then
-		print_repo "$TARGET_REPOSITORY\n"
-		printf "Fetching repositories, this may take a long time..."
-		match_repository $PACKAGES
-		printf "${COLOR_32M} done!\n"
-		printf "\n"
-	else
-		print_repo "build from every repository\n"
-	fi
-	build_packages
-}
-
-function deps()
-{
-	pacman -Qd | awk -F" " '{print $1}' > ${LOG_FILE_PACKAGES}
-	PACKAGES=`pacman -Qd | awk -F" " '{print $1}'`
-	if [ "$DONE_DEPS" != "TRUE" ]; then
-		print_type "deps packages"
-		build
-	fi
-	DONE_DEPS="TRUE"
-}
-
-function explicit()
-{
-	pacman -Qe | awk -F" " '{print $1}' > ${LOG_FILE_PACKAGES}
-	PACKAGES=`pacman -Qe | awk -F" " '{print $1}'`
-	EXTRA_YAOURT_OPTIONS=""
-	if [ "$DONE_EXPLICIT" != "TRUE" ]; then
-		print_type "explicit packages"
-		build
-	fi
-	DONE_EXPLICIT="TRUE"
-}
-
 function world()
 {
 	pacman -Q | awk -F" " '{print $1}' > ${LOG_FILE_PACKAGES}
@@ -311,105 +413,19 @@ function world()
 	DONE_WORLD="TRUE"
 }
 
-function read_flags()
-{
-	if [ "$TYPES_ENABLED" == "" ] && [ "$REPOSITORY_ENABLED" != "" ]; then
-		printf "No type specified, assuming world...\n\n"
-		ENABLED_TYPES="world"
-		sleep 1
-	elif [ "$TYPES_ENABLED" != "" ] && [ "$REPOSITORY_ENABLED" == "" ]; then
-		printf "No repository specified, build all...\n\n"
-		sleep 1
-	fi
-	for EXTRA_TYPE in $ENABLED_TYPES; do
-		case $EXTRA_TYPE in
-			deps) deps ;;
-			explicit) explicit ;;
-			world) world ;;
-		esac
-	done
-}
-
-function add_repository()
-{
-	ALREADY_ADDED="FALSE"
-	for ADDED_REPOSITORY in $TARGET_REPOSITORY; do
-		if [ "$ADDED_REPOSITORY" == "$1" ]; then
-			ALREADY_ADDED="TRUE"
-		fi
-	done
-	if [ "$ALREADY_ADDED" != "TRUE" ]; then
-		TARGET_REPOSITORY=${TARGET_REPOSITORY}$1" "
-		REPOSITORY_ENABLED="TRUE"
-	fi
-}
-
-function add_type()
-{
-	ALREADY_ADDED="FALSE"
-	for ADDED_TYPE in $ENABLED_TYPES; do
-		if [ "$ADDED_TYPE" == "$1" ]; then
-			ALREADY_ADDED="TRUE"
-		fi
-	done
-	if [ "$ALREADY_ADDED" != "TRUE" ]; then
-		ENABLED_TYPES=${ENABLED_TYPES}$1" "
-		TYPES_ENABLED="TRUE"
-	fi
-}
-
-function check_nocolor()
-{
-	if [ -z "$1" ]; then
-		NO_COLOR="TRUE"
-	fi
-	for EXTRA_FLAG in $@; do
-		if [ "$EXTRA_FLAG" == "--nocolor" ]; then
-			NO_COLOR="TRUE"
-		fi
-	done
-}
-
-function check_args()
-{
-	if [ -z "$1" ]; then
-		print_usage
-		exit
-	fi
-	for EXTRA_FLAG in $@; do
-		case $EXTRA_FLAG in
-			--core) add_repository "core" ;;
-			--extra) add_repository "extra" ;;
-			--testing) add_repository "testing" ;;
-			--unstable) add_repository "unstable" ;;
-			--community) add_repository "community" ;;
-			--aur) add_repository "aur" ;;
-		esac
-	done
-	for EXTRA_FLAG in $@; do
-		case $EXTRA_FLAG in
-			--deps) add_type "deps" ;;
-			--explicit) add_type "explicit" ;;
-			--world) add_type "world" ;;
-			--clean) clean ;;
-			--edit) VERBOSE="TRUE"; EDIT_PKGBUILD="TRUE" ;;
-			--gccinfo) print_gcc_info ;;
-			-h) print_usage; exit ;;
-			--help) print_usage; exit ;;
-			--verbose) VERBOSE="TRUE" ;;
-		esac
-	done
-}
+# END - start building by type
+# BEGIN - application run
 
 function main()
 {
-	check_nocolor $@
-	environment
 	check_uid
-	print_title
 	check_args $@
+	environment
+	print_title
 	resume
-	read_flags
+	read_type
 }
 
 main $@
+
+# END - application run
