@@ -191,7 +191,7 @@ function add_carch()
 	if [ -z "$arch" ]; then
 		source /etc/makepkg.conf
 		[ -z "$CARCH" ] && CARCH="i686"
-		sed -i "/^build/iarch=('$CARCH')\n" ./PKGBUILD
+		sed -i "/^build/iarch=('$CARCH')\n" ./PKGBUILD &> /dev/null
 	fi
 }
 
@@ -235,7 +235,7 @@ function get_pkgbuild()
 	esac
 	if [ "$REPOSITORY" != "aur" ]; then
 		$SYNCCMD $SYNCARGS ${SYNCSERVER}::abs/${CARCH}/${REPOSITORY}/${1} ${TMP_PATH}
-		if [ -z ${TMP_PATH}/${1}/PKGBUILD ]; then
+		if [ ! -e ${TMP_PATH}/${1}/PKGBUILD ]; then
 			REPOSITORY="aur"
 		fi
 	fi
@@ -291,23 +291,27 @@ function build_multiple_packages()
 			EXTRA_PACMAN_OPTIONS="--asdeps"
 		fi
 		get_pkgbuild ${CURRENT_PACKAGE} &> /dev/null
-		add_carch
-		edit_pkgbuild
-		get_pkginfo
-		if [ "$VERBOSE" != "TRUE" ]; then
-			makepkg --asroot --noconfirm &> /dev/null
-		else
-			if [ "$NO_COLOR" != "TRUE" ]; then
-				makepkg --asroot --noconfirm
+		if [ -f ${TMP_PATH}/${CURRENT_PACKAGE}/PKGBUILD ]; then
+			add_carch
+			edit_pkgbuild
+			get_pkginfo
+			if [ "$VERBOSE" != "TRUE" ]; then
+				makepkg --asroot --noconfirm &> /dev/null
 			else
-				makepkg --asroot --noconfirm --nocolor
+				if [ "$NO_COLOR" != "TRUE" ]; then
+					makepkg --asroot --noconfirm
+				else
+					makepkg --asroot --noconfirm --nocolor
+				fi
+				printf "${COLOR_32M}==>${COLOR_0M}"
+				printf "${COLOR_1M} Installing $pkgname-$pkgver-$pkgrel-$arch.pkg.tar.gz"
+				printf "${COLOR_0M} [package $CURRENT_INDEX of $NUM_PACKAGES] ..."
 			fi
-			printf "${COLOR_32M}==>${COLOR_0M}"
-			printf "${COLOR_1M} Installing $pkgname-$pkgver-$pkgrel-$arch.pkg.tar.gz"
-			printf "${COLOR_0M} [package $CURRENT_INDEX of $NUM_PACKAGES] ..."
+			pacman -U --noconfirm $EXTRA_PACMAN_OPTIONS $pkgname-$pkgver-$pkgrel-$arch.pkg.tar.gz &> /dev/null
+			CHECK_INSTALL=`grep upgraded /var/log/pacman.log | tail -n1 /var/log/pacman.log | grep $CURRENT_PACKAGE | wc -l`
+		else
+			CHECK_INSTALL="0"
 		fi
-		pacman -U --noconfirm $EXTRA_PACMAN_OPTIONS $pkgname-$pkgver-$pkgrel-$arch.pkg.tar.gz &> /dev/null
-		CHECK_INSTALL=`grep upgraded /var/log/pacman.log | tail -n1 /var/log/pacman.log | grep $CURRENT_PACKAGE | wc -l`
 		if [ "$CHECK_INSTALL" == "1" ]; then
 			rm -rf ${TMP_PATH}/${CURRENT_PACKAGE} &> /dev/null
 			sed -i '/'${CURRENT_PACKAGE}'/d' ${LOG_FILE_PACKAGES}
@@ -328,7 +332,7 @@ function build_multiple_packages()
 
 function check_log_file()
 {
-	if [ -z "${LOG_FILE_PACKAGES}" ]; then
+	if [ ! -e ${LOG_FILE_PACKAGES} ]; then
 		printf "${COLOR_31M}==> ERROR:${COLOR_0M}"
 		printf "${COLOR_1M} I was unable to find any package to build...";
 		printf "${COLOR_31M} exiting!${COLOR_0M}\n"
