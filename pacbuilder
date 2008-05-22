@@ -59,6 +59,8 @@ function print_usage()
 	printf "OPTIONS:\n"
 	printf "  General:\n"
 	printf "    --help       print this help\n"
+	printf "    --new        do not resume\n"
+	printf "    --clean      remove previous log\n"
 	printf "    --gccinfo    print current compilation flags\n"
 	printf "    --nocolor    don't use any color\n"
 	printf "    --verbose    print makepkg output\n"
@@ -117,7 +119,7 @@ function get_pkginfo()
 
 function build_packages()
 {
-	rm -rf ${TMP_PATH}/*
+	rm -rf ${TMP_PATH}/* &> /dev/null
 	ERROR_PACKAGES=""
 	PACKAGES=`cat ${LOG_FILE_PACKAGES}`
 	NUM_PACKAGES=`cat ${LOG_FILE_PACKAGES} | wc -l`
@@ -150,7 +152,7 @@ function build_packages()
 		pacman -U --noconfirm $EXTRA_PACMAN_OPTIONS $pkgname-$pkgver-$pkgrel-$arch.pkg.tar.gz &> /dev/null
 		CHECK_INSTALL=`grep upgraded /var/log/pacman.log | tail -n1 /var/log/pacman.log | grep $CURRENT_PACKAGE | wc -l`
 		if [ "$CHECK_INSTALL" == "1" ]; then
-			rm -rf ${TMP_PATH}/${CURRENT_PACKAGE}
+			rm -rf ${TMP_PATH}/${CURRENT_PACKAGE} &> /dev/null
 			sed -i '/'${CURRENT_PACKAGE}'/d' ${LOG_FILE_PACKAGES}
 			printf "${COLOR_32M} installed!${COLOR_0M}\n"
 		else
@@ -159,8 +161,12 @@ function build_packages()
 		fi
 		(( CURRENT_INDEX++ ))
 	done
-	printf "${COLOR_31M}==> $(gettext "ERROR:")${COLOR_0M}"
-	printf "${COLOR_1M} I was unable to install these packages: $ERROR_PACKAGES${COLOR_0M}\n"
+	if [ "$ERROR_PACKAGES" != "" ]; then
+		printf "${COLOR_31M}==> $(gettext "ERROR:")${COLOR_0M}"
+		printf "${COLOR_1M} I was unable to install these packages: $ERROR_PACKAGES${COLOR_0M}\n"
+	else
+		delete_log
+	fi
 }
 
 function match_repository()
@@ -187,14 +193,33 @@ function resume()
 {
 	if [ -f ${LOG_FILE_PACKAGES} ]; then
 		printf "${COLOR_33M}==> $(gettext "ATTENTION:")${COLOR_0M}"
-		printf "${COLOR_1M} Previous build detected. Do you want to resume? (no/yes): ${COLOR_0M}"
+		printf "${COLOR_1M} Previous build detected. Do you want to resume? (yes/no): ${COLOR_0M}"
 		read RESUME_ANSWER
 		printf "\n"
-		if [ "$RESUME_ANSWER" == "yes" ]; then
+		if [ "$RESUME_ANSWER" != "no" ]; then
 			printf "Resuming...\n"
 			build_packages
 			exit
 		fi
+	fi
+}
+
+function clean()
+{
+	printf "${COLOR_33M}==> $(gettext "WARNING:")${COLOR_0M}"
+	printf "${COLOR_1M} Do you want to delete previous build log?\n"
+	printf "You won't be able to resume that build anymore! (no/yes): ${COLOR_0M}"
+	read DELETE_ANSWER
+	printf "\n"
+	if [ "$DELETE_ANSWER" == "yes" ]; then
+			delete_log
+	fi
+}
+
+function delete_log()
+{
+	if [ -f ${LOG_FILE_PACKAGES} ]; then
+		rm -rf ${LOG_FILE_PACKAGES} &> /dev/null
 	fi
 }
 
@@ -314,6 +339,7 @@ function check_args()
 {
 	if [ -z "$1" ]; then
 		print_usage
+		exit
 	fi
 	for EXTRA_FLAG in $@; do
 		if [ "$EXTRA_FLAG" == "--core" ]; then
@@ -337,6 +363,8 @@ function check_args()
 			add_type "explicit"
 		elif [ "$EXTRA_FLAG" == "--world" ]; then
 			add_type "world"
+		elif [ "$EXTRA_FLAG" == "--clean" ]; then
+			clean
 		elif [ "$EXTRA_FLAG" == "--help" ]; then
 			print_usage
 		elif [ "$EXTRA_FLAG" == "--gccinfo" ]; then
