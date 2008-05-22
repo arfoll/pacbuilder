@@ -60,6 +60,7 @@ function print_usage()
 	printf "  General:\n"
 	printf "    --help       print this help\n"
 	printf "    --clean      remove previous log\n"
+	printf "    --edit       be verbose and edit PKGBUILD\N"
 	printf "    --gccinfo    print current compilation flags\n"
 	printf "    --nocolor    don't use any color\n"
 	printf "    --verbose    print makepkg output\n"
@@ -116,6 +117,22 @@ function get_pkginfo()
 	arch=$CARCH
 }
 
+function edit_pkgbuild()
+{
+	if [ "$VERBOSE" == "TRUE" ] && [ "$EDIT_PKGBUILD" == "TRUE" ]; then
+		if [ -f ./PKGBUILD ]; then
+			printf "\n"
+			printf "${COLOR_33M}==> $(gettext "EDIT PKGBUILD:")${COLOR_0M}"
+			printf "${COLOR_1M} Do you want to edit this PKGBUILD? (yes/no): ${COLOR_0M}"
+			read EDIT_ANSWER
+			if [ "$EDIT_ANSWER" != "no" ]; then
+				[ -z "$EDITOR" ] && EDITOR=nano
+				$EDITOR ./PKGBUILD
+			fi
+		fi
+	fi
+}
+
 function build_packages()
 {
 	rm -rf ${TMP_PATH}/* &> /dev/null
@@ -135,6 +152,7 @@ function build_packages()
 		yaourt -G --noconfirm --nocolor $CURRENT_PACKAGE &> /dev/null
 		add_carch
 		get_pkginfo
+		edit_pkgbuild
 		if [ "$VERBOSE" != "TRUE" ]; then
 			makepkg --asroot --noconfirm &> /dev/null
 		else
@@ -361,6 +379,7 @@ function check_args()
 			--explicit) add_type "explicit" ;;
 			--world) add_type "world" ;;
 			--clean) clean ;;
+			--edit) VERBOSE="TRUE"; EDIT_PKGBUILD="TRUE" ;;
 			--gccinfo) print_gcc_info ;;
 			--help) print_usage; exit ;;
 			--verbose) VERBOSE="TRUE" ;;
