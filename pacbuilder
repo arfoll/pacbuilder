@@ -193,7 +193,7 @@ function build_packages()
 	done
 	if [ "$ERROR_PACKAGES" != "" ]; then
 		printf "${COLOR_31M}==> $(gettext "ERROR:")${COLOR_0M}"
-		printf "${COLOR_1M} I was unable to install these packages: $ERROR_PACKAGES${COLOR_0M}\n"
+		printf "${COLOR_1M} I was unable to install these packages:${COLOR_0M} $ERROR_PACKAGES\n"
 	else
 		delete_log
 	fi
