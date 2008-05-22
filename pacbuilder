@@ -216,14 +216,22 @@ function edit_pkgbuild()
 function get_pkgbuild()
 {
 	REPOSITORY=`LANG=C pacman -Si ${1} 2> /dev/null | grep -m1 Repository | awk -F": " '{ print $2 }'`
-	if [ "$REPOSITORY" == "" ]; then
-		REPOSITORY="aur"
-	fi
+	case $REPOSITORY in
+		core) ;;
+		extra) ;;
+		testing) ;;
+		unstable) ;;
+		*) REPOSITORY="aur" ;;
+	esac
 	if [ "$REPOSITORY" != "aur" ]; then
 		$SYNCCMD $SYNCARGS ${SYNCSERVER}::abs/${CARCH}/${REPOSITORY}/${1} ${TMP_PATH}
 	else
+		cd ${TMP_PATH}
 		wget http://aur.archlinux.org/packages/${1}/${1}.tar.gz
+		tar xfz ./${1}.tar.gz
+		rm -rf ./${1}.tar.gz
 	fi
+	cd ${TMP_PATH}/${1}
 	#yaourt -G --noconfirm --nocolor $1 &> /dev/null
 }
 
@@ -269,8 +277,6 @@ function build_multiple_packages()
 		if [ "`pacman -Qd $CURRENT_PACKAGE | awk -F" " '{print $1}'`" != "" ]; then
 			EXTRA_PACMAN_OPTIONS="--asdeps"
 		fi
-		mkdir -p ${TMP_PATH}/${CURRENT_PACKAGE}
-		cd ${TMP_PATH}/${CURRENT_PACKAGE}
 		get_pkgbuild ${CURRENT_PACKAGE}
 		add_carch
 		edit_pkgbuild
@@ -342,9 +348,13 @@ function match_repository()
 	CURRENT_INDEX=0
 	for CURRENT_PACKAGE in $@; do
 		REPOSITORY=`LANG=C pacman -Si $CURRENT_PACKAGE 2> /dev/null | grep -m1 Repository | awk -F": " '{ print $2 }'`
-		if [ "$REPOSITORY" == "" ]; then
-			REPOSITORY="aur"
-		fi
+		case $REPOSITORY in
+			core) ;;
+			extra) ;;
+			testing) ;;
+			unstable) ;;
+			*) REPOSITORY="aur" ;;
+		esac
 		for CURRENT_REPOSITORY in $REPOSITORY; do
 			for CURRENT_TARGET_REPOSITORY in $TARGET_REPOSITORY; do
 				if [ "$CURRENT_REPOSITORY" == "$CURRENT_TARGET_REPOSITORY" ]; then
