@@ -109,6 +109,35 @@ function check_args()
 # END_SECTION - command line options
 # BEGIN_SECTION - print to stdout
 
+function print_help()
+{
+	printf "A tool to massively recompile packages from sources\n"
+	printf "It currently fetches both ABS and AUR\n"
+	printf "\n"
+	printf "USAGE:\n"
+	printf "  $COMMAND_BIN --option1 --option2 --option3 ...\n"
+	printf "\n"
+	printf "OPTIONS:\n"
+	printf "  General:\n"
+	printf "    --help       print this help\n"
+	printf "    --clean      remove previous log\n"
+	printf "    --edit       be verbose and edit PKGBUILD\n"
+	printf "    --gccinfo    print current compilation flags\n"
+	printf "    --nocolor    don't use any color\n"
+	printf "    --verbose    print makepkg output\n"
+	printf "  Target type:\n"
+	printf "    --deps       recompile deps\n"
+	printf "    --explicit   recompile explicitely installed packages\n"
+	printf "    --world      recompile both deps and explicit\n"
+	printf "  Target repository:\n"
+	printf "    --core       recompile packages in core\n"
+	printf "    --extra      recompile packages in extra\n"
+	printf "    --testing    recompile packages in testing\n"
+	printf "    --unstable   recompile packages in unstable\n"
+	printf "    --community  recompile packages in community\n"
+	printf "    --aur        recompile packages in aur\n"
+}
+
 function print_gcc_info()
 {
 	source /etc/makepkg.conf
@@ -143,35 +172,6 @@ function print_title()
 function print_type()
 {
 	printf "${COLOR_1M}Type:${COLOR_0M} $1\n"
-}
-
-function print_help()
-{
-	printf "A tool to massively recompile packages from sources\n"
-	printf "It currently fetches both ABS and AUR\n"
-	printf "\n"
-	printf "USAGE:\n"
-	printf "  $COMMAND_BIN --option1 --option2 --option3 ...\n"
-	printf "\n"
-	printf "OPTIONS:\n"
-	printf "  General:\n"
-	printf "    --help       print this help\n"
-	printf "    --clean      remove previous log\n"
-	printf "    --edit       be verbose and edit PKGBUILD\n"
-	printf "    --gccinfo    print current compilation flags\n"
-	printf "    --nocolor    don't use any color\n"
-	printf "    --verbose    print makepkg output\n"
-	printf "  Target type:\n"
-	printf "    --deps       recompile deps\n"
-	printf "    --explicit   recompile explicitely installed packages\n"
-	printf "    --world      recompile both deps and explicit\n"
-	printf "  Target repository:\n"
-	printf "    --core       recompile packages in core\n"
-	printf "    --extra      recompile packages in extra\n"
-	printf "    --testing    recompile packages in testing\n"
-	printf "    --unstable   recompile packages in unstable\n"
-	printf "    --community  recompile packages in community\n"
-	printf "    --aur        recompile packages in aur\n"
 }
 
 # END_SECTION - print to stdout
@@ -218,7 +218,7 @@ function get_pkginfo()
 # END_SECTION - pkgbuild parsing and editing
 # BEGIN_SECTION - manage package installation
 
-function build()
+function build_type()
 {
 	if [ "$TARGET_REPOSITORY" != "" ]; then
 		print_repo "$TARGET_REPOSITORY\n"
@@ -338,29 +338,6 @@ function match_repository()
 # END_SECTION - manage package installation
 # BEGIN_SECTION - start building by type
 
-function deps()
-{
-	pacman -Qd | awk -F" " '{print $1}' > ${LOG_FILE_PACKAGES}
-	PACKAGES=`pacman -Qd | awk -F" " '{print $1}'`
-	if [ "$DONE_DEPS" != "TRUE" ]; then
-		print_type "deps packages"
-		build
-	fi
-	DONE_DEPS="TRUE"
-}
-
-function explicit()
-{
-	pacman -Qe | awk -F" " '{print $1}' > ${LOG_FILE_PACKAGES}
-	PACKAGES=`pacman -Qe | awk -F" " '{print $1}'`
-	EXTRA_YAOURT_OPTIONS=""
-	if [ "$DONE_EXPLICIT" != "TRUE" ]; then
-		print_type "explicit packages"
-		build
-	fi
-	DONE_EXPLICIT="TRUE"
-}
-
 function read_type()
 {
 	if [ "$TYPES_ENABLED" == "" ] && [ "$REPOSITORY_ENABLED" != "" ]; then
@@ -373,9 +350,9 @@ function read_type()
 	fi
 	for EXTRA_TYPE in $ENABLED_TYPES; do
 		case $EXTRA_TYPE in
-			deps) deps ;;
-			explicit) explicit ;;
-			world) world ;;
+			deps) type_deps ;;
+			explicit) type_explicit ;;
+			world) type_world ;;
 		esac
 	done
 }
@@ -389,7 +366,7 @@ function resume()
 		printf "\n"
 		if [ "$RESUME_ANSWER" != "no" ]; then
 			printf "Resuming...\n"
-			build_packages
+			build_multiple_packages
 			exit
 		else
 			printf "${COLOR_33M}==> ATTENTION:${COLOR_0M}"
@@ -403,13 +380,36 @@ function resume()
 	fi
 }
 
-function world()
+function type_deps()
+{
+	pacman -Qd | awk -F" " '{print $1}' > ${LOG_FILE_PACKAGES}
+	PACKAGES=`pacman -Qd | awk -F" " '{print $1}'`
+	if [ "$DONE_DEPS" != "TRUE" ]; then
+		print_type "deps packages"
+		build_type
+	fi
+	DONE_DEPS="TRUE"
+}
+
+function type_explicit()
+{
+	pacman -Qe | awk -F" " '{print $1}' > ${LOG_FILE_PACKAGES}
+	PACKAGES=`pacman -Qe | awk -F" " '{print $1}'`
+	EXTRA_YAOURT_OPTIONS=""
+	if [ "$DONE_EXPLICIT" != "TRUE" ]; then
+		print_type "explicit packages"
+		build_type
+	fi
+	DONE_EXPLICIT="TRUE"
+}
+
+function type_world()
 {
 	pacman -Q | awk -F" " '{print $1}' > ${LOG_FILE_PACKAGES}
 	PACKAGES=`pacman -Q | awk -F" " '{print $1}'`
 	if [ "$DONE_WORLD" != "TRUE" ]; then
 		print_type "both deps and explicit packages"
-		build
+		build_type
 	fi
 	DONE_DEPS="TRUE"
 	DONE_EXPLICIT="TRUE"
