@@ -510,7 +510,7 @@ function build_multiple_packages()
     print_checkinstall $CHECK_INSTALL
     (( CURRENT_INDEX++ ))
   done
-  if [ "$KEEPDEPS" != "TRUE"] && [ "${MAKEDEPS_INSTALLED}" != "" ]; then
+  if [ "$KEEPDEPS" != "TRUE" ] && [ "${MAKEDEPS_INSTALLED}" != "" ]; then
     print_uninstalling
     pacman -Rd --noconfirm \
     ${MAKEDEPS_INSTALLED} &> /dev/null || CHECK_UNINSTALL=0
