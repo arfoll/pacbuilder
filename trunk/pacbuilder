@@ -26,20 +26,19 @@ function colorize_output()
 
 function environment()
 {
+	source /etc/makepkg.conf
+
 	AUTHOR_NAME="Andrea Cimitan"
 	AUTHOR_EMAIL="andrea.cimitan@gmail.com"
 	COMMAND_BIN="pacbuilder"
 	COMMAND_NAME="PacBuilder"
 	LICENSE="GPLv3"
-	TMP_PATH=/tmp/${COMMAND_BIN}/build
-	LOG_FILE_PACKAGES=/var/log/${COMMAND_BIN}-packages.log
-	ABS_REPOS_URL="http://repos.archlinux.org/viewvc.cgi"
+	[ -z "$CARCH" ] && CARCH="i686"
+	[ -z "$TMP_PATH" ] && TMP_PATH=/tmp/${COMMAND_BIN}/build
+	[ -z "$LOG_FILE_PACKAGES" ] && LOG_FILE_PACKAGES=/var/log/${COMMAND_BIN}-packages.log
 	SYNCCMD="rsync"
 	SYNCARGS="-mrtv --no-motd --delete-after --delete-excluded"
 	SYNCSERVER="rsync.archlinux.org"
-	
-	source /etc/makepkg.conf
-	[ -z "$CARCH" ] && CARCH="i686"
 
 	mkdir -p ${TMP_PATH}
 }
@@ -99,17 +98,19 @@ function check_args()
 	done
 	for EXTRA_FLAG in $@; do
 		case $EXTRA_FLAG in
-			-h) print_help; exit ;;
-			--help) print_help; exit ;;
+			--help) HELP="TRUE" ;;
 			--verbose) VERBOSE="TRUE" ;;
 			--edit) VERBOSE="TRUE"; EDIT_PKGBUILD="TRUE" ;;
-			--gccinfo) print_gcc_info ;;
-			--clean) clean ;;
+			--gccinfo) GCCINFO="TRUE" ;;
+			--clean) CLEAN="TRUE" ;;
 			--sysupgrade) SYSUPGRADE="TRUE" ;;
 			--upgrade) SYSUPGRADE="TRUE" ;;
+			--install) INSTALLING="TRUE" ;;
 			--deps) add_type "deps" ;;
 			--explicit) add_type "explicit" ;;
 			--world) add_type "world" ;;
+			-h) HELP="TRUE" ;;
+			*) INSTALLPKGS=${INSTALLPKGS}${EXTRA_FLAG}" " ;;
 		esac
 	done
 }
@@ -150,8 +151,6 @@ function print_help()
 
 function print_gcc_info()
 {
-	source /etc/makepkg.conf
-
 	printf "${COLOR_1M}Carch:${COLOR_0M} ${CARCH}\n"
 	printf "${COLOR_1M}Chost:${COLOR_0M} ${CHOST}\n"
 	printf "${COLOR_1M}Cflags:${COLOR_0M} ${CFLAGS}\n"
@@ -191,9 +190,7 @@ function add_carch()
 {
 	unset arch
 	source ./PKGBUILD
-	if [ -z "$arch" ]; then
-		sed -i "/^build/iarch=('$CARCH')\n" ./PKGBUILD
-	fi
+	[ -z "$arch" ] && sed -i "/^build/iarch=('$CARCH')\n" ./PKGBUILD
 }
 
 function edit_pkgbuild()
@@ -218,7 +215,7 @@ function get_community_category()
 {
 	AUR_ID=`wget -q -O - "http://aur.archlinux.org/rpc.php?type=info&arg=${1}" \
 	        | sed -e 's/^.*{"ID":"//' -e 's/",".*$//' | sed '/^$/d'`
-	CATEGORY=`wget -q "http://aur.archlinux.org/packages.php?ID=${AUR_ID}" -O - \
+	CATEGORY=`wget -q -O - "http://aur.archlinux.org/packages.php?ID=${AUR_ID}" \
 	          | grep 'community ::' | sed 's|<[^<]*>||g' | awk '{print $3}'`
 	echo $CATEGORY
 }
@@ -280,6 +277,18 @@ function build_type()
 	build_multiple_packages
 }
 
+function install_packages()
+{
+	if [ "$INSTALLING" == "TRUE" ]; then
+		delete_log
+		for EXTRA_FLAG in $INSTALLPKGS; do
+			echo ${EXTRA_FLAG} >> ${LOG_FILE_PACKAGES}
+		done
+		cat ${LOG_FILE_PACKAGES}
+		build_multiple_packages
+	fi
+}
+
 function build_multiple_packages()
 {
 	rm -rf ${TMP_PATH}/* &> /dev/null
@@ -296,7 +305,7 @@ function build_multiple_packages()
 		if [ "`pacman -Qd $CURRENT_PACKAGE | awk -F" " '{print $1}'`" != "" ]; then
 			EXTRA_PACMAN_OPTIONS="--asdeps"
 		fi
-		get_pkgbuild ${CURRENT_PACKAGE} &> /dev/null
+		get_pkgbuild ${CURRENT_PACKAGE}
 		if [ -f ${TMP_PATH}/${CURRENT_PACKAGE}/PKGBUILD ]; then
 			add_carch
 			edit_pkgbuild
@@ -353,9 +362,7 @@ function clean()
 	printf "You will not be able to resume it in the future. Are you sure? (no/yes): ${COLOR_0M}"
 	read DELETE_ANSWER
 	printf "\n"
-	if [ "$DELETE_ANSWER" == "yes" ]; then
-			delete_log
-	fi
+	[ "$DELETE_ANSWER" == "yes" ] && delete_log
 }
 
 function delete_log()
@@ -367,7 +374,7 @@ function delete_log()
 
 function match_repository()
 {
-	JOINT_PACKAGES=""
+	delete_log
 	CURRENT_INDEX=0
 	for CURRENT_PACKAGE in $@; do
 		REPOSITORY=`LANG=C pacman -Si $CURRENT_PACKAGE 2> /dev/null | grep -m1 Repository | awk -F": " '{ print $2 }'`
@@ -382,13 +389,11 @@ function match_repository()
 		for CURRENT_REPOSITORY in $REPOSITORY; do
 			for CURRENT_TARGET_REPOSITORY in $TARGET_REPOSITORY; do
 				if [ "$CURRENT_REPOSITORY" == "$CURRENT_TARGET_REPOSITORY" ]; then
-					JOINT_PACKAGES=${JOINT_PACKAGES}$CURRENT_PACKAGE"\n"
+					echo ${CURRENT_PACKAGE} >> ${LOG_FILE_PACKAGES}
 				fi
 			done
 		done
 	done
-	echo -e $JOINT_PACKAGES > ${LOG_FILE_PACKAGES}
-	sed -i '/^$/d' ${LOG_FILE_PACKAGES}
 	PACKAGES=`cat ${LOG_FILE_PACKAGES}`
 }
 
@@ -441,6 +446,7 @@ function resume()
 function sysupgrade()
 {
 	if [ "$SYSUPGRADE" == "TRUE" ]; then
+		delete_log
 		printf "Refreshing pacman database, please wait..."
 		PACKAGES=(`pacman --sync --refresh --sysupgrade --print-uris \
 		           | grep "^\(ftp:\/\/\|http:\/\/\|file:\/\/\)" \
@@ -452,10 +458,8 @@ function sysupgrade()
 		                 -e "s/-[^-]*-[^-]*$//" \
 		           | sort`)
 		for PACKAGE in ${PACKAGES[@]}; do
-			UPGRADABLE_PACKAGES=${UPGRADABLE_PACKAGES}$PACKAGE"\n"
+			echo ${PACKAGE} >> ${LOG_FILE_PACKAGES}"\n"
 		done
-		echo -e $UPGRADABLE_PACKAGES > ${LOG_FILE_PACKAGES}
-		sed -i '/^$/d' ${LOG_FILE_PACKAGES}
 		PACKAGES=`cat ${LOG_FILE_PACKAGES}`
 		TYPES_ENABLED="TRUE"
 		printf "${COLOR_32M} done!${COLOR_0M}\n"
@@ -512,7 +516,11 @@ function main()
 	check_args $@
 	colorize_output
 	print_title
+	[ "$HELP" == "TRUE" ] && print_help && exit
+	[ "$CLEAN" == "TRUE" ] && clean
+	[ "$GCCINFO" == "TRUE" ] && print_gcc_info
 	resume
+	install_packages
 	sysupgrade
 	read_type
 }
