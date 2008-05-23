@@ -162,18 +162,18 @@ function print_building()
 function print_checkinstall()
 {
   if [ "$1" == "0" ]; then
-    printf "${C_31M} error!${C_0M}\n"
+    printf "${C_31M}error!${C_0M}\n"
   else
-    printf "${C_32M} installed!${C_0M}\n"
+    printf "${C_32M}installed!${C_0M}\n"
   fi
 }
 
 function print_checkuninstall()
 {
   if [ "$1" == "0" ]; then
-    printf "${C_31M} error!${C_0M}\n"
+    printf "${C_31M}error!${C_0M}\n"
   else
-    printf "${C_32M} uninstalled!${C_0M}\n"
+    printf "${C_32M}uninstalled!${C_0M}\n"
   fi
 }
 
