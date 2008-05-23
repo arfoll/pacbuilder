@@ -6,41 +6,47 @@
 
 function check_uid()
 {
-	if [ $UID != 0 ]; then
-		printf "$COMMAND_NAME requires root permissions to run\n"
-		exit
-	fi
+  if [ $UID != 0 ]; then
+    printf "$CMD_NAME requires root permissions to run\n"
+    exit
+  fi
 }
 
 function colorize_output()
 {
-	if [ "$NO_COLOR" != "TRUE" ]; then
-		COLOR_0M="\033[1;0m"
-		COLOR_1M="\033[1;1m"
-		COLOR_31M="\033[1;31m"
-		COLOR_32M="\033[1;32m"
-		COLOR_33M="\033[1;33m"
-		COLOR_34M="\033[1;34m"
-	fi
+  if [ "$NOCOLOR" != "TRUE" ]; then
+    C_0M="\033[1;0m"
+    C_1M="\033[1;1m"
+    C_31M="\033[1;31m"
+    C_32M="\033[1;32m"
+    C_33M="\033[1;33m"
+    C_34M="\033[1;34m"
+  else
+    NOCOLOR_FLAG="--nocolor"
+  fi
 }
 
 function environment()
 {
-	source /etc/makepkg.conf
+  source /etc/makepkg.conf
 
-	AUTHOR_NAME="Andrea Cimitan"
-	AUTHOR_EMAIL="andrea.cimitan@gmail.com"
-	COMMAND_BIN="pacbuilder"
-	COMMAND_NAME="PacBuilder"
-	LICENSE="GPLv3"
-	[ -z "$CARCH" ] && CARCH="i686"
-	[ -z "$TMP_PATH" ] && TMP_PATH=/tmp/${COMMAND_BIN}/build
-	[ -z "$LOG_FILE_PACKAGES" ] && LOG_FILE_PACKAGES=/var/log/${COMMAND_BIN}-packages.log
-	SYNCCMD="rsync"
-	SYNCARGS="-mrtv --no-motd --delete-after --delete-excluded"
-	SYNCSERVER="rsync.archlinux.org"
+  AUTHOR_NAME="Andrea Cimitan"
+  AUTHOR_EMAIL="andrea.cimitan@gmail.com"
+  CMD_BIN="pacbuilder"
+  CMD_NAME="PacBuilder"
+  LICENSE="GPLv3"
+  [ -z "$CARCH" ] && CARCH="i686"
+  [ -z "$TMP_PATH" ] && TMP_PATH=/tmp/${CMD_BIN}/build
+  [ -z "$LOG_FILE" ] && LOG_FILE=/var/log/${CMD_BIN}-packages.log
+  SYNCCMD="rsync"
+  SYNCARGS="-mrtv --no-motd --delete-after --delete-excluded"
+  SYNCSERVER="rsync.archlinux.org"
+  PACMANROOT=`LC_ALL=C pacman --verbose \
+              | grep 'DB Path' \
+              | awk '{print $4}' \
+              | sed "s/\/$//"`
 
-	mkdir -p ${TMP_PATH}
+  mkdir -p ${TMP_PATH}
 }
 
 # END_SECTION - environment checks
@@ -48,146 +54,251 @@ function environment()
 
 function add_repository()
 {
-	ALREADY_ADDED="FALSE"
-	for ADDED_REPOSITORY in $TARGET_REPOSITORY; do
-		if [ "$ADDED_REPOSITORY" == "$1" ]; then
-			ALREADY_ADDED="TRUE"
-		fi
-	done
-	if [ "$ALREADY_ADDED" != "TRUE" ]; then
-		TARGET_REPOSITORY=${TARGET_REPOSITORY}$1" "
-		REPOSITORY_ENABLED="TRUE"
-	fi
+  ALREADY_ADDED="FALSE"
+  for ADDED_REPO in $TARGET_REPO; do
+    if [ "$ADDED_REPO" == "$1" ]; then
+      ALREADY_ADDED="TRUE"
+    fi
+  done
+  if [ "$ALREADY_ADDED" != "TRUE" ]; then
+    TARGET_REPO=${TARGET_REPO}$1" "
+    REPO_ENABLED="TRUE"
+  fi
 }
 
 function add_type()
 {
-	ALREADY_ADDED="FALSE"
-	for ADDED_TYPE in $ENABLED_TYPES; do
-		if [ "$ADDED_TYPE" == "$1" ]; then
-			ALREADY_ADDED="TRUE"
-		fi
-	done
-	if [ "$ALREADY_ADDED" != "TRUE" ]; then
-		ENABLED_TYPES=${ENABLED_TYPES}$1" "
-		TYPES_ENABLED="TRUE"
-	fi
+  ALREADY_ADDED="FALSE"
+  for ADDED_TYPE in $ENABLED_TYPES; do
+    if [ "$ADDED_TYPE" == "$1" ]; then
+      ALREADY_ADDED="TRUE"
+    fi
+  done
+  if [ "$ALREADY_ADDED" != "TRUE" ]; then
+    ENABLED_TYPES=${ENABLED_TYPES}$1" "
+    TYPES_ENABLED="TRUE"
+  fi
 }
 
 function check_args()
 {
-	if [ -z "$1" ]; then
-		NO_COLOR="TRUE"
-		print_help
-		exit
-	fi
-	for EXTRA_FLAG in $@; do
-		if [ "$EXTRA_FLAG" == "--nocolor" ]; then
-			NO_COLOR="TRUE"
-		fi
-	done
-	for EXTRA_FLAG in $@; do
-		case $EXTRA_FLAG in
-			--core) add_repository "core" ;;
-			--extra) add_repository "extra" ;;
-			--testing) add_repository "testing" ;;
-			--unstable) add_repository "unstable" ;;
-			--community) add_repository "community" ;;
-			--aur) add_repository "aur" ;;
-		esac
-	done
-	for EXTRA_FLAG in $@; do
-		case $EXTRA_FLAG in
-			--help) HELP="TRUE" ;;
-			--verbose) VERBOSE="TRUE" ;;
-			--builddeps) BUILDDEPS="TRUE" ;;
-			--edit) VERBOSE="TRUE"; EDIT_PKGBUILD="TRUE" ;;
-			--gccinfo) GCCINFO="TRUE" ;;
-			--notitle) NOTITLE="TRUE" ;;
-			--clean) CLEAN="TRUE" ;;
-			--noresume) NORESUME="TRUE" ;;
-			--sysupgrade) SYSUPGRADE="TRUE" ;;
-			--upgrade) SYSUPGRADE="TRUE" ;;
-			--install) INSTALLING="TRUE" ;;
-			--deps) add_type "deps" ;;
-			--explicit) add_type "explicit" ;;
-			--world) add_type "world" ;;
-			-h) HELP="TRUE" ;;
-			*) INSTALLPKGS=${INSTALLPKGS}${EXTRA_FLAG}" " ;;
-		esac
-	done
+  if [ -z "$1" ]; then
+    NOCOLOR="TRUE"
+    print_help
+    exit
+  fi
+  for EXTRA_FLAG in $@; do
+    if [ "$EXTRA_FLAG" == "--nocolor" ]; then
+      NOCOLOR="TRUE"
+    fi
+  done
+  for EXTRA_FLAG in $@; do
+    case $EXTRA_FLAG in
+      --core) add_repository "core" ;;
+      --extra) add_repository "extra" ;;
+      --testing) add_repository "testing" ;;
+      --unstable) add_repository "unstable" ;;
+      --community) add_repository "community" ;;
+      --aur) add_repository "aur" ;;
+    esac
+  done
+  for EXTRA_FLAG in $@; do
+    case $EXTRA_FLAG in
+      --help) HELP="TRUE" ;;
+      --verbose) VERBOSE="TRUE" ;;
+      --builddeps) BUILDDEPS="TRUE" ;;
+      --edit) VERBOSE="TRUE"; EDIT_PKGBUILD="TRUE" ;;
+      --gccinfo) GCCINFO="TRUE" ;;
+      --notitle) NOTITLE="TRUE" ;;
+      --clean) CLEAN="TRUE" ;;
+      --keepdeps) KEEPDEPS="TRUE" ;;
+      --noresume) NORESUME="TRUE" ;;
+      --sysupgrade) SYSUPGRADE="TRUE" ;;
+      --upgrade) SYSUPGRADE="TRUE" ;;
+      --install) INSTALLING="TRUE" ;;
+      --deps) add_type "deps" ;;
+      --explicit) add_type "explicit" ;;
+      --world) add_type "world" ;;
+      -h) HELP="TRUE" ;;
+      *) INSTALLPKGS=${INSTALLPKGS}${EXTRA_FLAG}" " ;;
+    esac
+  done
 }
 
 # END_SECTION - command line options
 # BEGIN_SECTION - print to stdout
 
+function print_building()
+{
+  printf "${C_32M}==>${C_0M}"
+  printf "${C_1M} Building ${CURRENT_PKG}"
+  if [ "$DEPENDENCY_OF" != "" ]; then
+    printf "${C_0M} [$DEPENDENCY_OF] "
+  else
+    printf "${C_0M} [package $CURRENT_INDEX of $NUM_PKGS] "
+  fi
+}
+
+function print_checkinstall()
+{
+  if [ "$1" == "0" ]; then
+    printf "${C_31M} error!${C_0M}\n"
+  else
+    printf "${C_32M} installed!${C_0M}\n"
+  fi
+}
+
+function print_checkuninstall()
+{
+  if [ "$1" == "0" ]; then
+    printf "${C_31M} error!${C_0M}\n"
+  else
+    printf "${C_32M} uninstalled!${C_0M}\n"
+  fi
+}
+
+function print_clean()
+{
+  printf "${C_33M}==> WARNING:${C_0M}"
+  printf "${C_1M} Do you want to delete your previous build log?\n"
+  printf "You will not be able to resume it in the future."
+  printf " Are you sure? (n/y): ${C_0M}"
+}
+
+function print_edit_pkgbuild()
+{
+  printf "${C_33M}==> EDIT PKGBUILD:${C_0M}"
+  printf "${C_1M} Do you want to edit this PKGBUILD? (y/n):${C_0M} "
+}
+
+function print_errorpkgs()
+{
+  printf "${C_31M}==> ERROR:${C_0M}"
+  printf "${C_1M} I was unable to install these packages:"
+  printf "${C_0M} $ERROR_PKGS\n"
+}
+
 function print_help()
 {
-	printf "A tool to massively recompile packages from sources\n"
-	printf "It currently fetches both ABS and AUR\n"
-	printf "\n"
-	printf "USAGE:\n"
-	printf "  $COMMAND_BIN --option1 --option2 --option3 ...\n"
-	printf "\n"
-	printf "OPTIONS:\n"
-	printf "  General:\n"
-	printf "    --help       print this help\n"
-	printf "    --builddeps  build and install the dependencies\n"
-	printf "    --clean      remove previous log\n"
-	printf "    --edit       be verbose and edit PKGBUILD\n"
-	printf "    --gccinfo    print current compilation flags\n"
-	printf "    --nocolor    don't use any color\n"
-	printf "    --notitle    don't print the title\n"
-	printf "    --verbose    print makepkg output\n"
-	printf "  Target type:\n"
-	printf "    --deps       recompile deps\n"
-	printf "    --explicit   recompile explicitely installed packages\n"
-	printf "    --world      recompile both deps and explicit\n"
-	printf "  Target repository:\n"
-	printf "    --core       recompile packages in core\n"
-	printf "    --extra      recompile packages in extra\n"
-	printf "    --testing    recompile packages in testing\n"
-	printf "    --unstable   recompile packages in unstable\n"
-	printf "    --community  recompile packages in community\n"
-	printf "    --aur        recompile packages in aur\n"
-	printf "  Other operations:\n"
-	printf "    --install    build specified packages\n"
-	printf "    --noresume   do not resume\n"
-	printf "    --upgrade    build the updated packages\n"
+  printf "A tool to massively recompile packages from sources\n"
+  printf "It currently fetches both ABS and AUR\n"
+  printf "\n"
+  printf "USAGE:\n"
+  printf "  $CMD_BIN --option1 --option2 --option3 ...\n"
+  printf "\n"
+  printf "OPTIONS:\n"
+  printf "  General:\n"
+  printf "    --help       print this help\n"
+  printf "    --builddeps  build and install the dependencies\n"
+  printf "    --clean      remove previous log\n"
+  printf "    --edit       be verbose and edit PKGBUILD\n"
+  printf "    --gccinfo    print current compilation flags\n"
+  printf "    --keepdeps   keep makedepends after install\n"
+  printf "    --nocolor    don't use any color\n"
+  printf "    --notitle    don't print the title\n"
+  printf "    --verbose    print makepkg output\n"
+  printf "  Target type:\n"
+  printf "    --deps       recompile deps\n"
+  printf "    --explicit   recompile explicitely installed packages\n"
+  printf "    --world      recompile both deps and explicit\n"
+  printf "  Target repository:\n"
+  printf "    --core       recompile packages in core\n"
+  printf "    --extra      recompile packages in extra\n"
+  printf "    --testing    recompile packages in testing\n"
+  printf "    --unstable   recompile packages in unstable\n"
+  printf "    --community  recompile packages in community\n"
+  printf "    --aur        recompile packages in aur\n"
+  printf "  Other operations:\n"
+  printf "    --install    build specified packages\n"
+  printf "    --noresume   do not resume\n"
+  printf "    --upgrade    build the updated packages\n"
 }
 
 function print_gcc_info()
 {
-	printf "${COLOR_1M}Carch:${COLOR_0M} ${CARCH}\n"
-	printf "${COLOR_1M}Chost:${COLOR_0M} ${CHOST}\n"
-	printf "${COLOR_1M}Cflags:${COLOR_0M} ${CFLAGS}\n"
-	printf "${COLOR_1M}Cxxflags:${COLOR_0M} ${CXXFLAGS}\n"
-	printf "\n"
+  printf "${C_1M}Carch:${C_0M} ${CARCH}\n"
+  printf "${C_1M}Chost:${C_0M} ${CHOST}\n"
+  printf "${C_1M}Cflags:${C_0M} ${CFLAGS}\n"
+  printf "${C_1M}Cxxflags:${C_0M} ${CXXFLAGS}\n"
+  printf "\n"
+}
+
+function print_installing()
+{
+  printf "${C_32M}==>${C_0M}"
+  printf "${C_1M} Installing $pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz"
+  if [ "$DEPENDENCY_OF" != "" ]; then
+    printf "${C_0M} [$DEPENDENCY_OF] "
+  else
+    printf "${C_0M} [package $CURRENT_INDEX of $NUM_PKGS] "
+  fi
+}
+
+function print_match_repo()
+{
+  printf "Fetching repositories, this may take a long time..."
+}
+
+function print_no_log_file()
+{
+  printf "${C_31M}==> ERROR:${C_0M}"
+  printf "${C_1M} I was unable to find any package to build...";
+  printf "${C_31M} exiting!${C_0M}\n"
+}
+
+function print_refreshing_database()
+{
+  printf "Refreshing pacman database, please wait..."
 }
 
 function print_repo()
 {
-	printf "${COLOR_1M}Repo:${COLOR_0M} $1\n"
+  printf "${C_1M}Repo:${C_0M} $1\n"
+}
+
+function print_resume_detected()
+{
+  printf "${C_33M}==> ATTENTION:${C_0M}"
+  printf "${C_1M} Previous build detected."
+  printf " Do you want to resume? (y/n):${C_0M} "
+}
+
+function print_resume_overwrite()
+{
+  printf "${C_33M}==> ATTENTION:${C_0M}"
+  printf "${C_1M} Your previous build will be overwritten."
+  printf " Continue? (n/y):${C_0M} "
+}
+
+function print_success()
+{
+ printf "${C_32M} $1!${C_0M}\n"
 }
 
 function print_title()
 {
-	if [ "$NO_COLOR" != "TRUE" ]; then
-		printf "${COLOR_34M}-------------------------------\n"
-		printf "${COLOR_33M} $COMMAND_NAME${COLOR_0M}, by $AUTHOR_NAME ${COLOR_34M}\n"
-		printf "${COLOR_34M}-------------------------------\n"
-		printf "${COLOR_0M}\n"
-	else
-		printf "\033[1;0m-------------------------------\n"
-		printf " $COMMAND_NAME, by $AUTHOR_NAME\n"
-		printf "\033[1;0m-------------------------------\n"
-		printf "\n"
-	fi
+  if [ "$NOCOLOR" != "TRUE" ]; then
+    printf "${C_34M}-------------------------------\n"
+    printf "${C_33M} $CMD_NAME${C_0M}, by $AUTHOR_NAME ${C_34M}\n"
+    printf "${C_34M}-------------------------------\n"
+    printf "${C_0M}\n"
+  else
+    printf "\033[1;0m-------------------------------\n"
+    printf " $CMD_NAME, by $AUTHOR_NAME\n"
+    printf "\033[1;0m-------------------------------\n"
+    printf "\n"
+  fi
 }
 
 function print_type()
 {
-	printf "${COLOR_1M}Type:${COLOR_0M} $1\n"
+  printf "${C_1M}Type:${C_0M} $1\n"
+}
+
+function print_uninstalling()
+{
+  printf "${C_33M}==>${C_0M}"
+  printf "${C_1M} Uninstalling:${C_0M} $MAKEDEPS_INSTALLED"
 }
 
 # END_SECTION - print to stdout
@@ -195,349 +306,403 @@ function print_type()
 
 function add_carch()
 {
-	unset arch
-	source ./PKGBUILD
-	[ -z "$arch" ] && sed -i "/^build/iarch=('$CARCH')\n" ./PKGBUILD
+  unset arch
+  source ./PKGBUILD
+  [ -z "$arch" ] && sed -i "/^build/iarch=('$CARCH')\n" ./PKGBUILD
 }
 
 function edit_pkgbuild()
 {
-	if [ "$VERBOSE" == "TRUE" ]; then
-		printf "\n"
-		if [ "$EDIT_PKGBUILD" == "TRUE" ]; then
-			if [ -f ./PKGBUILD ]; then
-				printf "${COLOR_33M}==> EDIT PKGBUILD:${COLOR_0M}"
-				printf "${COLOR_1M} Do you want to edit this PKGBUILD? (yes/no): ${COLOR_0M}"
-				read EDIT_ANSWER
-				if [ "$EDIT_ANSWER" != "no" ]; then
-					[ -z "$EDITOR" ] && EDITOR=nano
-					$EDITOR ./PKGBUILD
-				fi
-			fi
-		fi
-	fi
+  if [ "$VERBOSE" == "TRUE" ]; then
+    printf "\n"
+    if [ "$EDIT_PKGBUILD" == "TRUE" ]; then
+      if [ -f ./PKGBUILD ]; then
+        print_edit_pkgbuild
+        read EDIT_ANSWER
+        if [ "$EDIT_ANSWER" != "n" ]; then
+          [ -z "$EDITOR" ] && EDITOR=nano
+          $EDITOR ./PKGBUILD
+        fi
+      fi
+    fi
+  fi
 }
 
 function get_community_category()
 {
-	AUR_ID=`wget -q -O - "http://aur.archlinux.org/rpc.php?type=info&arg=${1}" \
-	        | sed -e 's/^.*{"ID":"//' -e 's/",".*$//' | sed '/^$/d'`
-	CATEGORY=`wget -q -O - "http://aur.archlinux.org/packages.php?ID=${AUR_ID}" \
-	          | grep 'community ::' | sed 's|<[^<]*>||g' | awk '{print $3}'`
-	echo $CATEGORY
+  AUR_ID=`wget -q -O - "http://aur.archlinux.org/rpc.php?type=info&arg=${1}" \
+          | sed -e 's/^.*{"ID":"//' -e 's/",".*$//' \
+          | sed '/^$/d'`
+  CATEGORY=`wget -q -O - "http://aur.archlinux.org/packages.php?ID=${AUR_ID}" \
+            | grep 'community ::' \
+            | sed 's|<[^<]*>||g' \
+            | awk '{print $3}'`
+  echo $CATEGORY
+}
+
+function get_package_depends()
+{
+  unset depends pkgname DEPS
+  source ./PKGBUILD
+  for DEP in $(echo "${depends[@]}" | tr -d '\\'); do
+    DEPS[${#DEPS[@]}]=$(echo $DEP | sed 's/=.*//' \
+                                  | sed 's/>.*//' \
+                                  | sed 's/<.*//')
+  done
+  [ ${#DEPS[@]} -eq 0 ] && return 0
+  for DEP in ${DEPS[@]}; do
+    if [ "${DEP}" != "${pkgname}" ] &&
+       ! is_installed ${DEP} &&
+       ! is_provided ${DEP}; then
+      [ "$VERBOSE" != "TRUE" ] && printf "\n"
+      LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
+      NOCOLOR=$NOCOLOR VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
+      DEPENDENCY_OF="dependency on ${pkgname}" PACMAN_FLAGS="--asdeps" \
+      ${CMD_BIN} --notitle --noresume --builddeps --install ${DEP} || FAILED=1
+      rm -rf LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
+      [ "$FAILED" == "1" ] && return 1
+    fi
+  done
+  return 0
+}
+
+function get_package_makedepends()
+{
+  unset makedepends pkgname MAKEDEPS MAKEDEPS_INSTALLED
+  source ./PKGBUILD
+  for MAKEDEP in $(echo "${makedepends[@]}" | tr -d '\\'); do
+    MAKEDEPS[${#MAKEDEPS[@]}]=$(echo $MAKEDEP | sed 's/=.*//' \
+                                              | sed 's/>.*//' \
+                                              | sed 's/<.*//')
+  done
+  [ ${#MAKEDEPS[@]} -eq 0 ] && return 0
+  for MAKEDEP in ${MAKEDEPS[@]}; do
+    if [ "${MAKEDEP}" != "${pkgname}" ] &&
+       ! is_installed ${MAKEDEP} &&
+       ! is_provided ${MAKEDEP}; then
+      [ "$VERBOSE" != "TRUE" ] && printf "\n"
+      LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
+      PACMAN_FLAGS="--asdeps" VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
+      DEPENDENCY_OF="makedependency of ${pkgname}" \
+      ${CMD_BIN} --notitle --noresume --builddeps --install $MAKEDEP || FAILED=1
+      rm -rf LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
+      [ "$FAILED" == "1" ] && return 1
+      MAKEDEPS_INSTALLED=${MAKEDEPS_INSTALLED}${MAKEDEP}" "
+    fi
+  done
+  return 0
 }
 
 function get_pkgbuild()
 {
-	REPOSITORY=`LANG=C pacman -Si ${1} 2> /dev/null | grep -m1 Repository | awk -F": " '{ print $2 }'`
-	case $REPOSITORY in
-		core) ;;
-		extra) ;;
-		testing) ;;
-		unstable) ;;
-		community) REPOSITORY=${REPOSITORY}/`get_community_category ${1}` ;;
-		*) REPOSITORY="aur" ;;
-	esac
-	if [ "$REPOSITORY" != "aur" ]; then
-		$SYNCCMD $SYNCARGS ${SYNCSERVER}::abs/${CARCH}/${REPOSITORY}/${1} ${TMP_PATH}
-		if [ ! -e ${TMP_PATH}/${1}/PKGBUILD ]; then
-			REPOSITORY="aur"
-		fi
-	fi
-	if [ "$REPOSITORY" == "aur" ]; then
-		cd ${TMP_PATH}
-		wget http://aur.archlinux.org/packages/${1}/${1}.tar.gz
-		tar xfz ./${1}.tar.gz
-		rm -rf ./${1}.tar.gz
-	fi
-	cd ${TMP_PATH}/${1}
+  REPO=`LANG=C pacman -Si ${1} 2> /dev/null \
+        | grep -m1 Repository \
+        | awk -F": " '{ print $2 }'`
+  case $REPO in
+    core) ;;
+    extra) ;;
+    testing) ;;
+    unstable) ;;
+    community) REPO=${REPO}/`get_community_category ${1}` ;;
+    *) REPO="aur" ;;
+  esac
+  if [ "$REPO" != "aur" ]; then
+    ${SYNCCMD} ${SYNCARGS} ${SYNCSERVER}::abs/${CARCH}/${REPO}/${1} ${TMP_PATH}
+    if [ ! -e ${TMP_PATH}/${1}/PKGBUILD ]; then
+      REPO="aur"
+    fi
+  fi
+  if [ "$REPO" == "aur" ]; then
+    cd ${TMP_PATH}
+    wget http://aur.archlinux.org/packages/${1}/${1}.tar.gz
+    tar xfz ./${1}.tar.gz
+    rm -rf ./${1}.tar.gz
+  fi
+  cd ${TMP_PATH}/${1}
 }
 
 function get_pkginfo()
 {
-	unset arch pkgname pkgver pkgrel
-	source ./PKGBUILD
-}
-
-function get_makedepends()
-{
-	unset makedepends
-	source ./PKGBUILD
-	arch=$CARCH
-}
-
-function get_package_deps()
-{
-	unset depends makedepends pkgname DEPS
-	source ./PKGBUILD
-	for DEP in $(echo "${depends[@]} ${makedepends[@]}" | tr -d '\\'); do
-		DEPS[${#DEPS[@]}]=$(echo $DEP | sed 's/=.*//' \
-		                              | sed 's/>.*//' \
-		                              | sed 's/<.*//')
-	done
-	[ ${#DEPS[@]} -eq 0 ] && return 0
-	for DEP in ${DEPS[@]}; do
-		if [ "${DEP}" != "${pkgname}" ] && [ `pacman -Q ${DEP} 2> /dev/null | wc -l` == "0" ]; then
-			printf "\n"
-			LOG_FILE_PACKAGES=/tmp/${COMMAND_BIN}/${COMMAND_BIN}-${pkgname}.log \
-			PACMAN_OPTIONS="--asdeps" \
-			${COMMAND_BIN} --notitle --noresume --builddeps --install ${DEP} || FAILED=1
-			rm -rf LOG_FILE_PACKAGES=/tmp/${COMMAND_BIN}/${COMMAND_BIN}-${pkgname}.log
-			if [ $FAILED -eq 1 ]; then
-				break
-			fi
-		fi
-	done
-	return 0
+  unset arch pkgname pkgver pkgrel
+  source ./PKGBUILD
 }
 
 # END_SECTION - pkgbuild parsing and editing
+# BEGIN_SECTION - fetch pacman database
+
+function is_installed()
+{
+  if grep -qrl --include="desc" "^$1$" "$PACMANROOT/local"; then
+    return 0;
+  else
+    return 1;
+  fi
+}
+
+function is_installed_cached()
+{
+  if [ `pacman -Q ${1} 2> /dev/null | wc -l` != "0" ]; then
+    return 0;
+  else
+    return 1;
+  fi
+}
+
+function is_provided()
+{
+  local candidates=(`grep -srl --line-regexp --include="depends" \
+                     "$1" "$PACMANROOT/local"`)
+  for file in ${candidates[@]};do
+    if echo $(cat $file) | grep -q "%PROVIDES%.*$1"; then
+      return 0;
+    else
+      continue;
+    fi
+  done
+  return 1
+}
+
+# END_SECTION - fetch pacman database
 # BEGIN_SECTION - manage package installation
-
-function build_type()
-{
-	if [ "$TARGET_REPOSITORY" != "" ]; then
-		print_repo "$TARGET_REPOSITORY\n"
-		printf "Fetching repositories, this may take a long time..."
-		match_repository $PACKAGES
-		printf "${COLOR_32M} done!${COLOR_0M}\n"
-		printf "\n"
-	else
-		print_repo "build from every repository\n"
-	fi
-	build_multiple_packages
-}
-
-function install_packages()
-{
-	if [ "$INSTALLING" == "TRUE" ]; then
-		delete_log
-		for EXTRA_FLAG in $INSTALLPKGS; do
-			echo ${EXTRA_FLAG} >> ${LOG_FILE_PACKAGES}
-		done
-		PACKAGES=`cat ${LOG_FILE_PACKAGES}`
-		build_multiple_packages
-		exit
-	fi
-}
 
 function build_multiple_packages()
 {
-	check_log_file
-	sed -i '/^$/d' ${LOG_FILE_PACKAGES}
-	PACKAGES=`cat ${LOG_FILE_PACKAGES}`
-	NUM_PACKAGES=`cat ${LOG_FILE_PACKAGES} | wc -l`
-	ERROR_PACKAGES=""
-	CURRENT_INDEX=1
-	for CURRENT_PACKAGE in $PACKAGES; do
-		printf "${COLOR_32M}==>${COLOR_0M}"
-		printf "${COLOR_1M} Building ${CURRENT_PACKAGE}"
-		printf "${COLOR_0M} [package $CURRENT_INDEX of $NUM_PACKAGES] ..."
-		if [ "`pacman -Qd ${CURRENT_PACKAGE} 2> /dev/null | awk -F" " '{print $1}'`" != "" ]; then
-			PACMAN_OPTIONS="--asdeps"
-		fi
-		get_pkgbuild ${CURRENT_PACKAGE} &> /dev/null
-		if [ -f ${TMP_PATH}/${CURRENT_PACKAGE}/PKGBUILD ]; then
-			add_carch
-			edit_pkgbuild
-			get_pkginfo
-			[ "${BUILDDEPS}" == "TRUE" ] && get_package_deps
-			if [ "$VERBOSE" != "TRUE" ]; then
-				makepkg --asroot --noconfirm &> /dev/null
-			else
-				if [ "$NO_COLOR" != "TRUE" ]; then
-					makepkg --asroot --noconfirm
-				else
-					makepkg --asroot --noconfirm --nocolor
-				fi
-				printf "${COLOR_32M}==>${COLOR_0M}"
-				printf "${COLOR_1M} Installing $pkgname-$pkgver-$pkgrel-${CARCH}.pkg.tar.gz"
-				printf "${COLOR_0M} [package $CURRENT_INDEX of $NUM_PACKAGES] ..."
-			fi
-			pacman -U --noconfirm $PACMAN_OPTIONS $pkgname-$pkgver-$pkgrel-${CARCH}.pkg.tar.gz &> /dev/null
-			CHECK_INSTALL=`grep upgraded /var/log/pacman.log | tail -n1 /var/log/pacman.log | grep $CURRENT_PACKAGE | wc -l`
-		else
-			CHECK_INSTALL="0"
-		fi
-		if [ "$CHECK_INSTALL" == "1" ]; then
-			rm -rf ${TMP_PATH}/${CURRENT_PACKAGE} &> /dev/null
-			sed -i '/'${CURRENT_PACKAGE}'/d' ${LOG_FILE_PACKAGES}
-			printf "${COLOR_32M} installed!${COLOR_0M}\n"
-		else
-			ERROR_PACKAGES=${ERROR_PACKAGES}$CURRENT_PACKAGE" "
-			printf "${COLOR_31M} error!${COLOR_0M}\n"
-		fi
-		(( CURRENT_INDEX++ ))
-	done
-	if [ "$ERROR_PACKAGES" != "" ]; then
-		printf "${COLOR_31M}==> ERROR:${COLOR_0M}"
-		printf "${COLOR_1M} I was unable to install these packages:${COLOR_0M} $ERROR_PACKAGES\n"
-		return 1
-	else
-		delete_log
-		return 0
-	fi
+  check_log_file
+  sed -i '/^$/d' ${LOG_FILE}
+  PACKAGES=`cat ${LOG_FILE}`
+  NUM_PKGS=`cat ${LOG_FILE} | wc -l`
+  ERROR_PKGS=""
+  CURRENT_INDEX=1
+  for CURRENT_PKG in $PACKAGES; do
+    unset CHECK_INSTALL
+    print_building
+    if [ "`pacman -Qd ${CURRENT_PKG} 2> /dev/null \
+           | awk -F" " '{print $1}'`" != "" ]; then
+      PACMAN_FLAGS="--asdeps"
+    fi
+    get_pkgbuild ${CURRENT_PKG} &> /dev/null
+    if [ -f ${TMP_PATH}/${CURRENT_PKG}/PKGBUILD ]; then
+      add_carch
+      edit_pkgbuild
+      get_pkginfo
+      if [ "${BUILDDEPS}" == "TRUE" ]; then
+        get_package_makedepends || FAILED=1
+        get_package_depends || FAILED=1
+      fi
+      [ "$FAILED" == "1" ] && CHECK_INSTALL=0
+      if [ "$VERBOSE" != "TRUE" ]; then
+        makepkg --asroot --noconfirm $NOCOLOR_FLAG &> /dev/null
+      else
+        makepkg --asroot --noconfirm $NOCOLOR_FLAG
+        print_installing
+      fi
+      pacman -U --noconfirm $PACMAN_FLAGS  \
+      $pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz &> /dev/null || CHECK_INSTALL=0
+    else
+      CHECK_INSTALL=0
+    fi
+    if [ "$CHECK_INSTALL" != "0" ]; then
+      rm -rf ${TMP_PATH}/${CURRENT_PKG} &> /dev/null
+      sed -i '/'${CURRENT_PKG}'/d' ${LOG_FILE}
+    else
+      ERROR_PKGS=${ERROR_PKGS}$CURRENT_PKG" "
+    fi
+    print_checkinstall $CHECK_INSTALL
+    (( CURRENT_INDEX++ ))
+  done
+  if [ "$KEEPDEPS" != "TRUE"] && [ "${MAKEDEPS_INSTALLED}" != "" ]; then
+    print_uninstalling
+    pacman -Rd --noconfirm \
+    ${MAKEDEPS_INSTALLED} &> /dev/null || CHECK_UNINSTALL=0
+    print_checkuninstall $CHECK_UNINSTALL
+  fi
+  if [ "$ERROR_PKGS" != "" ] && [ "$DEPENDENCY_OF" == "" ]; then
+    print_errorpkgs
+    return 1
+  else
+    delete_log
+  fi
+  return 0
 }
 
 function check_log_file()
 {
-	if [ ! -e ${LOG_FILE_PACKAGES} ]; then
-		printf "${COLOR_31M}==> ERROR:${COLOR_0M}"
-		printf "${COLOR_1M} I was unable to find any package to build...";
-		printf "${COLOR_31M} exiting!${COLOR_0M}\n"
-		exit
-	fi
+  if [ ! -e ${LOG_FILE} ]; then
+    print_no_log_file
+    exit
+  fi
 }
 
 function clean()
 {
-	printf "${COLOR_33M}==> WARNING:${COLOR_0M}"
-	printf "${COLOR_1M} Do you want to delete your previous build log?\n"
-	printf "You will not be able to resume it in the future. Are you sure? (no/yes): ${COLOR_0M}"
-	read DELETE_ANSWER
-	printf "\n"
-	[ "$DELETE_ANSWER" == "yes" ] && delete_log
+  print_clean
+  read DELETE_ANSWER
+  printf "\n"
+  [ "$DELETE_ANSWER" == "y" ] && delete_log
 }
 
 function delete_log()
 {
-	if [ -f ${LOG_FILE_PACKAGES} ]; then
-		rm -rf ${LOG_FILE_PACKAGES} &> /dev/null
-	fi
+  if [ -f ${LOG_FILE} ]; then
+    rm -rf ${LOG_FILE} &> /dev/null
+  fi
 }
 
-function match_repository()
+function match_repo()
 {
-	delete_log
-	CURRENT_INDEX=0
-	for CURRENT_PACKAGE in $@; do
-		REPOSITORY=`LANG=C pacman -Si $CURRENT_PACKAGE 2> /dev/null | grep -m1 Repository | awk -F": " '{ print $2 }'`
-		case $REPOSITORY in
-			core) ;;
-			extra) ;;
-			testing) ;;
-			unstable) ;;
-			community) ;;
-			*) REPOSITORY="aur" ;;
-		esac
-		for CURRENT_REPOSITORY in $REPOSITORY; do
-			for CURRENT_TARGET_REPOSITORY in $TARGET_REPOSITORY; do
-				if [ "$CURRENT_REPOSITORY" == "$CURRENT_TARGET_REPOSITORY" ]; then
-					echo ${CURRENT_PACKAGE} >> ${LOG_FILE_PACKAGES}
-				fi
-			done
-		done
-	done
-	PACKAGES=`cat ${LOG_FILE_PACKAGES}`
+  delete_log
+  CURRENT_INDEX=0
+  for CURRENT_PKG in $@; do
+    REPO=`LANG=C pacman -Si $CURRENT_PKG 2> /dev/null \
+          | grep -m1 Repository \
+          | awk -F": " '{ print $2 }'`
+    case $REPO in
+      core) ;;
+      extra) ;;
+      testing) ;;
+      unstable) ;;
+      community) ;;
+      *) REPO="aur" ;;
+    esac
+    for CURRENT_REPO in $REPO; do
+      for CURRENT_TARGET_REPO in $TARGET_REPO; do
+        if [ "$CURRENT_REPO" == "$CURRENT_TARGET_REPO" ]; then
+          echo ${CURRENT_PKG} >> ${LOG_FILE}
+        fi
+      done
+    done
+  done
+  PACKAGES=`cat ${LOG_FILE}`
 }
 
 # END_SECTION - select packages
 # BEGIN_SECTION - start building by type
 
+function build_type()
+{
+  if [ "$TARGET_REPO" != "" ]; then
+    check_log_file
+    print_repo "$TARGET_REPO\n"
+    print_match_repo
+    match_repo `cat ${LOG_FILE}`
+    print_success "done"
+    printf "\n"
+  else
+    print_repo "build from every repository\n"
+  fi
+  build_multiple_packages
+}
+
+function install()
+{
+  if [ "$INSTALLING" == "TRUE" ]; then
+    delete_log
+    for EXTRA_FLAG in $INSTALLPKGS; do
+      echo ${EXTRA_FLAG} >> ${LOG_FILE}
+    done
+    build_multiple_packages
+    exit
+  fi
+}
+
 function read_type()
 {
-	if [ "$TYPES_ENABLED" == "" ] && [ "$REPOSITORY_ENABLED" != "" ]; then
-		printf "No type specified, assuming world...\n\n"
-		ENABLED_TYPES="world"
-		sleep 1
-	elif [ "$TYPES_ENABLED" != "" ] && [ "$REPOSITORY_ENABLED" == "" ]; then
-		printf "No repository specified, build all...\n\n"
-		sleep 1
-	fi
-	for EXTRA_TYPE in $ENABLED_TYPES; do
-		case $EXTRA_TYPE in
-			deps) type_deps ;;
-			explicit) type_explicit ;;
-			world) type_world ;;
-		esac
-	done
+  if [ "$TYPES_ENABLED" == "" ] && [ "$REPO_ENABLED" != "" ]; then
+    printf "No type specified, assuming world...\n\n"
+    ENABLED_TYPES="world"
+    sleep 1
+  elif [ "$TYPES_ENABLED" != "" ] && [ "$REPO_ENABLED" == "" ]; then
+    printf "No repository specified, build all...\n\n"
+    sleep 1
+  fi
+  for EXTRA_TYPE in $ENABLED_TYPES; do
+    case $EXTRA_TYPE in
+      deps) type_deps ;;
+      explicit) type_explicit ;;
+      world) type_world ;;
+    esac
+  done
 }
 
 function resume()
 {
-	if [ -f ${LOG_FILE_PACKAGES} ]; then
-		printf "${COLOR_33M}==> ATTENTION:${COLOR_0M}"
-		printf "${COLOR_1M} Previous build detected. Do you want to resume? (yes/no):${COLOR_0M} "
-		read RESUME_ANSWER
-		if [ "$RESUME_ANSWER" != "no" ]; then
-			printf "\n"
-			printf "Resuming...\n"
-			build_multiple_packages
-			exit
-		else
-			printf "${COLOR_33M}==> ATTENTION:${COLOR_0M}"
-			printf "${COLOR_1M} Your previous build will be overwritten. Continue? (no/yes):${COLOR_0M} "
-			read RESUME_ANSWER
-			printf "\n"
-			if [ "$RESUME_ANSWER" != "yes" ]; then
-				printf "Exiting...\n"
-				exit
-			fi
-		fi
-	fi
+  if [ -f ${LOG_FILE} ]; then
+    print_resume_detected
+    read RESUME_ANSWER
+    if [ "$RESUME_ANSWER" != "n" ]; then
+      printf "\n"
+      printf "Resuming...\n"
+      build_multiple_packages
+      exit
+    else
+      print_resume_overwrite
+      read RESUME_ANSWER
+      printf "\n"
+      if [ "$RESUME_ANSWER" != "y" ]; then
+        printf "Exiting...\n"
+        exit
+      fi
+    fi
+  fi
 }
 
 function sysupgrade()
 {
-	if [ "$SYSUPGRADE" == "TRUE" ]; then
-		delete_log
-		printf "Refreshing pacman database, please wait..."
-		PACKAGES=(`pacman --sync --refresh --sysupgrade --print-uris \
-		           | grep "^\(ftp:\/\/\|http:\/\/\|file:\/\/\)" \
-		           | sed -e "s/-i686.pkg.tar.gz$//" \
-		                 -e "s/-x86_64.pkg.tar.gz$//" \
-		                 -e "s/-any.pkg.tar.gz$//" \
-		                 -e "s/.pkg.tar.gz//" \
-		                 -e "s/^.*\///" \
-		                 -e "s/-[^-]*-[^-]*$//" \
-		           | sort`)
-		for PACKAGE in ${PACKAGES[@]}; do
-			echo ${PACKAGE} >> ${LOG_FILE_PACKAGES}
-		done
-		PACKAGES=`cat ${LOG_FILE_PACKAGES}`
-		TYPES_ENABLED="TRUE"
-		printf "${COLOR_32M} done!${COLOR_0M}\n"
-		printf "\n"
-		print_type "both deps and explicit packages"
-		build_type
-		exit
-	fi
+  if [ "$SYSUPGRADE" == "TRUE" ]; then
+    delete_log
+    print_refreshing_database
+    PACKAGES=(`pacman --sync --refresh --sysupgrade --print-uris \
+               | grep "^\(ftp:\/\/\|http:\/\/\|file:\/\/\)" \
+               | sed -e "s/-i686.pkg.tar.gz$//" \
+                     -e "s/-x86_64.pkg.tar.gz$//" \
+                     -e "s/-any.pkg.tar.gz$//" \
+                     -e "s/.pkg.tar.gz//" \
+                     -e "s/^.*\///" \
+                     -e "s/-[^-]*-[^-]*$//" \
+               | sort`)
+    for PACKAGE in ${PACKAGES[@]}; do
+      echo ${PACKAGE} >> ${LOG_FILE}
+    done
+    TYPES_ENABLED="TRUE"
+    print_success "done"
+    printf "\n"
+    print_type "both deps and explicit packages"
+    build_type
+    exit
+  fi
 }
 
 function type_deps()
 {
-	pacman -Qd | awk -F" " '{print $1}' > ${LOG_FILE_PACKAGES}
-	PACKAGES=`pacman -Qd | awk -F" " '{print $1}'`
-	if [ "$DONE_DEPS" != "TRUE" ]; then
-		print_type "deps packages"
-		build_type
-	fi
-	DONE_DEPS="TRUE"
+  pacman -Qd | awk -F" " '{print $1}' > ${LOG_FILE}
+  if [ "$DONE_DEPS" != "TRUE" ]; then
+    print_type "deps packages"
+    build_type
+  fi
+  DONE_DEPS="TRUE"
 }
 
 function type_explicit()
 {
-	pacman -Qe | awk -F" " '{print $1}' > ${LOG_FILE_PACKAGES}
-	PACKAGES=`pacman -Qe | awk -F" " '{print $1}'`
-	EXTRA_YAOURT_OPTIONS=""
-	if [ "$DONE_EXPLICIT" != "TRUE" ]; then
-		print_type "explicit packages"
-		build_type
-	fi
-	DONE_EXPLICIT="TRUE"
+  pacman -Qe | awk -F" " '{print $1}' > ${LOG_FILE}
+  EXTRA_YAOURT_OPTIONS=""
+  if [ "$DONE_EXPLICIT" != "TRUE" ]; then
+    print_type "explicit packages"
+    build_type
+  fi
+  DONE_EXPLICIT="TRUE"
 }
 
 function type_world()
 {
-	pacman -Q | awk -F" " '{print $1}' > ${LOG_FILE_PACKAGES}
-	PACKAGES=`pacman -Q | awk -F" " '{print $1}'`
-	if [ "$DONE_WORLD" != "TRUE" ]; then
-		print_type "both deps and explicit packages"
-		build_type
-	fi
-	DONE_DEPS="TRUE"
-	DONE_EXPLICIT="TRUE"
-	DONE_WORLD="TRUE"
+  pacman -Q | awk -F" " '{print $1}' > ${LOG_FILE}
+  if [ "$DONE_WORLD" != "TRUE" ]; then
+    print_type "both deps and explicit packages"
+    build_type
+  fi
+  DONE_DEPS="TRUE"
+  DONE_EXPLICIT="TRUE"
+  DONE_WORLD="TRUE"
 }
 
 # END_SECTION - select packages
@@ -545,18 +710,18 @@ function type_world()
 
 function main()
 {
-	environment
-	check_uid
-	check_args $@
-	colorize_output
-	[ "$NOTITLE" != "TRUE" ] && print_title
-	[ "$HELP" == "TRUE" ] && print_help && exit
-	[ "$CLEAN" == "TRUE" ] && clean
-	[ "$GCCINFO" == "TRUE" ] && print_gcc_info
-	[ "$NORESUME" != "TRUE" ] && resume
-	install_packages
-	sysupgrade
-	read_type
+  environment
+  check_uid
+  check_args $@
+  colorize_output
+  [ "$NOTITLE" != "TRUE" ] && print_title
+  [ "$HELP" == "TRUE" ] && print_help && exit
+  [ "$CLEAN" == "TRUE" ] && clean
+  [ "$GCCINFO" == "TRUE" ] && print_gcc_info
+  [ "$NORESUME" != "TRUE" ] && resume
+  install
+  sysupgrade
+  read_type
 }
 
 main $@
