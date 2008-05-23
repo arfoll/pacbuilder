@@ -102,7 +102,9 @@ function check_args()
 			--verbose) VERBOSE="TRUE" ;;
 			--edit) VERBOSE="TRUE"; EDIT_PKGBUILD="TRUE" ;;
 			--gccinfo) GCCINFO="TRUE" ;;
+			--notitle) NOTITLE="TRUE" ;;
 			--clean) CLEAN="TRUE" ;;
+			--noresume) NORESUME="TRUE" ;;
 			--sysupgrade) SYSUPGRADE="TRUE" ;;
 			--upgrade) SYSUPGRADE="TRUE" ;;
 			--install) INSTALLING="TRUE" ;;
@@ -133,6 +135,7 @@ function print_help()
 	printf "    --edit       be verbose and edit PKGBUILD\n"
 	printf "    --gccinfo    print current compilation flags\n"
 	printf "    --nocolor    don't use any color\n"
+	printf "    --notitle    don't print the title\n"
 	printf "    --verbose    print makepkg output\n"
 	printf "  Target type:\n"
 	printf "    --deps       recompile deps\n"
@@ -146,6 +149,8 @@ function print_help()
 	printf "    --community  recompile packages in community\n"
 	printf "    --aur        recompile packages in aur\n"
 	printf "  Other operations:\n"
+	printf "    --install    build specified packages\n"
+	printf "    --noresume   do not resume\n"
 	printf "    --upgrade    build the updated packages\n"
 }
 
@@ -250,7 +255,6 @@ function get_pkginfo()
 {
 	unset arch pkgname pkgver pkgrel
 	source ./PKGBUILD
-	arch=$CARCH
 }
 
 function get_makedepends()
@@ -258,6 +262,26 @@ function get_makedepends()
 	unset makedepends
 	source ./PKGBUILD
 	arch=$CARCH
+}
+
+function get_package_deps()
+{
+	unset depends makedepends pkgname
+	source $TMP_PATH/${1}/PKGBUILD
+	for DEP in $(echo "${depends[@]} ${makedepends[@]}" | tr -d '\\'); do
+		DEPS[${#DEPS[@]}]=$(echo $DEP | sed 's/=.*//' \
+		                              | sed 's/>.*//' \
+		                              | sed 's/<.*//')
+	done
+	[ ${#DEPS[@]} -eq 0 ] && return 0
+	for DEP in ${DEPS[@]}; do
+		if [ "${DEP}" != "${pkgname}" ] && [ `pacman -Q ${DEP} 2> /dev/null | wc -l` == "0" ]; then
+			printf "\n"
+			printf "for the ${pkgname}\n"
+			LOG_FILE_PACKAGES=/tmp/${COMMAND_BIN}/${COMMAND_BIN}-${pkgname}.log EXTRA_PACMAN_OPTIONS="--asdeps" ${COMMAND_BIN} --notitle --noresume --install ${DEP}
+			rm -rf LOG_FILE_PACKAGES=/tmp/${COMMAND_BIN}/${COMMAND_BIN}-${pkgname}.log
+		fi
+	done
 }
 
 # END_SECTION - pkgbuild parsing and editing
@@ -284,14 +308,14 @@ function install_packages()
 		for EXTRA_FLAG in $INSTALLPKGS; do
 			echo ${EXTRA_FLAG} >> ${LOG_FILE_PACKAGES}
 		done
-		cat ${LOG_FILE_PACKAGES}
+		PACKAGES=`cat ${LOG_FILE_PACKAGES}`
 		build_multiple_packages
+		exit
 	fi
 }
 
 function build_multiple_packages()
 {
-	rm -rf ${TMP_PATH}/* &> /dev/null
 	check_log_file
 	sed -i '/^$/d' ${LOG_FILE_PACKAGES}
 	PACKAGES=`cat ${LOG_FILE_PACKAGES}`
@@ -302,14 +326,15 @@ function build_multiple_packages()
 		printf "${COLOR_32M}==>${COLOR_0M}"
 		printf "${COLOR_1M} Building ${CURRENT_PACKAGE}"
 		printf "${COLOR_0M} [package $CURRENT_INDEX of $NUM_PACKAGES] ..."
-		if [ "`pacman -Qd $CURRENT_PACKAGE | awk -F" " '{print $1}'`" != "" ]; then
+		if [ "`pacman -Qd ${CURRENT_PACKAGE} 2> /dev/null | awk -F" " '{print $1}'`" != "" ]; then
 			EXTRA_PACMAN_OPTIONS="--asdeps"
 		fi
-		get_pkgbuild ${CURRENT_PACKAGE}
+		get_pkgbuild ${CURRENT_PACKAGE} &> /dev/null
 		if [ -f ${TMP_PATH}/${CURRENT_PACKAGE}/PKGBUILD ]; then
 			add_carch
 			edit_pkgbuild
 			get_pkginfo
+			#get_package_deps ${CURRENT_PACKAGE}
 			if [ "$VERBOSE" != "TRUE" ]; then
 				makepkg --asroot --noconfirm &> /dev/null
 			else
@@ -319,10 +344,10 @@ function build_multiple_packages()
 					makepkg --asroot --noconfirm --nocolor
 				fi
 				printf "${COLOR_32M}==>${COLOR_0M}"
-				printf "${COLOR_1M} Installing $pkgname-$pkgver-$pkgrel-$arch.pkg.tar.gz"
+				printf "${COLOR_1M} Installing $pkgname-$pkgver-$pkgrel-${CARCH}.pkg.tar.gz"
 				printf "${COLOR_0M} [package $CURRENT_INDEX of $NUM_PACKAGES] ..."
 			fi
-			pacman -U --noconfirm $EXTRA_PACMAN_OPTIONS $pkgname-$pkgver-$pkgrel-$arch.pkg.tar.gz &> /dev/null
+			pacman -U --noconfirm $EXTRA_PACMAN_OPTIONS $pkgname-$pkgver-$pkgrel-${CARCH}.pkg.tar.gz &> /dev/null
 			CHECK_INSTALL=`grep upgraded /var/log/pacman.log | tail -n1 /var/log/pacman.log | grep $CURRENT_PACKAGE | wc -l`
 		else
 			CHECK_INSTALL="0"
@@ -340,6 +365,7 @@ function build_multiple_packages()
 	if [ "$ERROR_PACKAGES" != "" ]; then
 		printf "${COLOR_31M}==> ERROR:${COLOR_0M}"
 		printf "${COLOR_1M} I was unable to install these packages:${COLOR_0M} $ERROR_PACKAGES\n"
+		return 1
 	else
 		delete_log
 	fi
@@ -458,7 +484,7 @@ function sysupgrade()
 		                 -e "s/-[^-]*-[^-]*$//" \
 		           | sort`)
 		for PACKAGE in ${PACKAGES[@]}; do
-			echo ${PACKAGE} >> ${LOG_FILE_PACKAGES}"\n"
+			echo ${PACKAGE} >> ${LOG_FILE_PACKAGES}
 		done
 		PACKAGES=`cat ${LOG_FILE_PACKAGES}`
 		TYPES_ENABLED="TRUE"
@@ -515,11 +541,11 @@ function main()
 	check_uid
 	check_args $@
 	colorize_output
-	print_title
+	[ "$NOTITLE" != "TRUE" ] && print_title
 	[ "$HELP" == "TRUE" ] && print_help && exit
 	[ "$CLEAN" == "TRUE" ] && clean
 	[ "$GCCINFO" == "TRUE" ] && print_gcc_info
-	resume
+	[ "$NORESUME" != "TRUE" ] && resume
 	install_packages
 	sysupgrade
 	read_type
