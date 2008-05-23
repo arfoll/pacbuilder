@@ -357,7 +357,7 @@ function get_package_depends()
       [ "$VERBOSE" != "TRUE" ] && printf "\n"
       LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
       NOCOLOR=$NOCOLOR VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
-      DEPENDENCY_OF="dependency on ${pkgname}" PACMAN_FLAGS="--asdeps" \
+      DEPENDENCY_OF="dependency of ${pkgname}" PACMAN_FLAGS="--asdeps" \
       ${CMD_BIN} --notitle --noresume --builddeps --install ${DEP} || FAILED=1
       rm -rf LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
       [ "$FAILED" == "1" ] && return 1
