@@ -6,10 +6,30 @@
 
 function check_uid()
 {
-  if [ $UID != 0 ]; then
+  ROOT_UID=0
+  E_NONROOT=67
+  if [ "$UID" -ne "$ROOT_UID" ]
+  then
     printf "$CMD_NAME requires root permissions to run\n"
-    exit
+    exit $E_NONROOT
   fi
+}
+
+function check_required_bin()
+{
+  if ! which $1 >/dev/null 2>&1; then
+    printf "You need to install $1!\n"
+    exit 1
+  fi
+}
+
+function check_required_binaries()
+{
+  check_required_bin "pacman"
+  check_required_bin "makepkg"
+  check_required_bin "rsync"
+  check_required_bin "tar"
+  check_required_bin "wget"
 }
 
 function colorize_output()
@@ -712,6 +732,7 @@ function main()
 {
   environment
   check_uid
+  check_required_binaries
   check_args $@
   colorize_output
   [ "$NOTITLE" != "TRUE" ] && print_title
