@@ -190,7 +190,7 @@ function print_checkuninstall()
 function print_clean()
 {
   printf "${C_33M}==> WARNING:${C_0M}"
-  printf "${C_1M} Do you want to delete your previous build log?\n"
+  printf "${C_1M} Do you want to delete your log file and build directory?\n"
   printf "You will not be able to resume it in the future."
   printf " Are you sure? (n/y): ${C_0M}"
 }
@@ -579,7 +579,7 @@ function clean()
   print_clean
   read DELETE_ANSWER
   printf "\n"
-  [ "$DELETE_ANSWER" == "y" ] && delete_log
+  [ "$DELETE_ANSWER" == "y" ] && delete_log && delete_tmp
 }
 
 function delete_log()
@@ -588,6 +588,14 @@ function delete_log()
     rm -rf $LOG_FILE &> /dev/null
   fi
 }
+
+function delete_tmp()
+{
+  if [ -d $TMP_PATH ]; then
+    rm -rf $TMP_PATH &> /dev/null
+  fi
+}
+
 
 function match_repo()
 {
