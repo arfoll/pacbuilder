@@ -159,6 +159,11 @@ function print_building()
   fi
 }
 
+function print_building_dep()
+{
+  printf "${C_33M}requires $1!${C_0M}"
+}
+
 function print_checkinstall()
 {
   if [ "$1" == "1" ]; then
@@ -384,6 +389,7 @@ function get_package_depends()
        ! is_installed $DEP &&
        ! is_provided $DEP; then
       [ "$BUILDDEPS" != "TRUE" ] && return 1
+      print_building_dep $DEP
       [ "$VERBOSE" != "TRUE" ] && printf "\n"
       LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
       NOCOLOR=$NOCOLOR VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
@@ -411,6 +417,7 @@ function get_package_makedepends()
        ! is_installed $MAKEDEP &&
        ! is_provided $MAKEDEP; then
       [ "$BUILDDEPS" != "TRUE" ] && return 1
+      print_building_dep $MAKEDEP
       [ "$VERBOSE" != "TRUE" ] && printf "\n"
       LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
       PACMAN_FLAGS="--asdeps" VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
