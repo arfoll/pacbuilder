@@ -334,13 +334,6 @@ function print_uninstalling_deps()
 # END_SECTION - print to stdout
 # BEGIN_SECTION - pkgbuild parsing and editing
 
-function add_carch()
-{
-  unset arch
-  source ./PKGBUILD
-  [ -z "$arch" ] && sed -i "/^build/iarch=('$CARCH')\n" ./PKGBUILD
-}
-
 function edit_pkgbuild()
 {
   if [ "$VERBOSE" == "TRUE" ]; then
@@ -525,7 +518,6 @@ function build_multiple_packages()
     if [ -f ${TMP_PATH}/${CURRENT_PKG}/PKGBUILD ]; then
       sed -i -e "s/dl.sourceforge.net/downloads.sourceforge.net/" \
                 ${TMP_PATH}/${CURRENT_PKG}/PKGBUILD &> /dev/null
-      add_carch
       edit_pkgbuild
       get_pkginfo
       get_package_makedepends || CHECK_DEPS=1
@@ -533,11 +525,11 @@ function build_multiple_packages()
       [ $CHECK_DEPS -eq 1 ] && CHECK_INSTALL=1
       if [ $CHECK_DEPS -eq 0 ]; then
         if [ "$VERBOSE" != "TRUE" ]; then
-          makepkg --asroot --noconfirm $NOCOLOR_FLAG &> /dev/null || \
+          makepkg -A --asroot --noconfirm $NOCOLOR_FLAG &> /dev/null || \
           CHECK_MAKEPKG=1
         else
           printf "\n"
-          makepkg --asroot --noconfirm $NOCOLOR_FLAG || CHECK_MAKEPKG=1
+          makepkg -A --asroot --noconfirm $NOCOLOR_FLAG || CHECK_MAKEPKG=1
           print_installing
         fi
         pacman -U --noconfirm $PACMAN_FLAGS \
