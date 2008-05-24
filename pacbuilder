@@ -66,7 +66,7 @@ function environment()
               | awk '{print $4}' \
               | sed "s/\/$//"`
 
-  mkdir -p ${TMP_PATH}
+  mkdir -p $TMP_PATH
 }
 
 # END_SECTION - environment checks
@@ -81,7 +81,7 @@ function add_repository()
     fi
   done
   if [ "$ALREADY_ADDED" != "TRUE" ]; then
-    TARGET_REPO=${TARGET_REPO}$1" "
+    TARGET_REPO=${TARGET_REPO}${1}" "
     REPO_ENABLED="TRUE"
   fi
 }
@@ -95,7 +95,7 @@ function add_type()
     fi
   done
   if [ "$ALREADY_ADDED" != "TRUE" ]; then
-    ENABLED_TYPES=${ENABLED_TYPES}$1" "
+    ENABLED_TYPES=${ENABLED_TYPES}${1}" "
     TYPES_ENABLED="TRUE"
   fi
 }
@@ -151,8 +151,8 @@ function check_args()
 function print_building()
 {
   printf "${C_32M}==>${C_0M}"
-  printf "${C_1M} Building ${CURRENT_PKG}"
-  if [ "$DEPENDENCY_OF" != "" ]; then
+  printf "${C_1M} Building $CURRENT_PKG"
+  if [ -n "$DEPENDENCY_OF" ]; then
     printf "${C_0M} [$DEPENDENCY_OF] "
   else
     printf "${C_0M} [package $CURRENT_INDEX of $NUM_PKGS] "
@@ -247,7 +247,7 @@ function print_installing()
 {
   printf "${C_32M}==>${C_0M}"
   printf "${C_1M} Installing $pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz"
-  if [ "$DEPENDENCY_OF" != "" ]; then
+  if [ -n "$DEPENDENCY_OF" ]; then
     printf "${C_0M} [$DEPENDENCY_OF] "
   else
     printf "${C_0M} [package $CURRENT_INDEX of $NUM_PKGS] "
@@ -292,7 +292,7 @@ function print_resume_overwrite()
 
 function print_success()
 {
- printf "${C_32M} $1!${C_0M}\n"
+  printf "${C_32M} $1!${C_0M}\n"
 }
 
 function print_title()
@@ -371,14 +371,14 @@ function get_package_depends()
   done
   [ ${#DEPS[@]} -eq 0 ] && return 0
   for DEP in ${DEPS[@]}; do
-    if [ "${DEP}" != "${pkgname}" ] &&
-       ! is_installed ${DEP} &&
-       ! is_provided ${DEP}; then
+    if [ "$DEP" != "$pkgname" ] &&
+       ! is_installed $DEP &&
+       ! is_provided $DEP; then
       [ "$VERBOSE" != "TRUE" ] && printf "\n"
       LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
       NOCOLOR=$NOCOLOR VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
-      DEPENDENCY_OF="dependency of ${pkgname}" PACMAN_FLAGS="--asdeps" \
-      ${CMD_BIN} --notitle --noresume --builddeps --install ${DEP} || FAILED=1
+      DEPENDENCY_OF="dependency of $pkgname" PACMAN_FLAGS="--asdeps" \
+      $CMD_BIN --notitle --noresume --builddeps --install $DEP || FAILED=1
       rm -rf LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
       [ "$FAILED" == "1" ] && return 1
     fi
@@ -397,14 +397,14 @@ function get_package_makedepends()
   done
   [ ${#MAKEDEPS[@]} -eq 0 ] && return 0
   for MAKEDEP in ${MAKEDEPS[@]}; do
-    if [ "${MAKEDEP}" != "${pkgname}" ] &&
-       ! is_installed ${MAKEDEP} &&
-       ! is_provided ${MAKEDEP}; then
+    if [ "$MAKEDEP" != "$pkgname" ] &&
+       ! is_installed $MAKEDEP &&
+       ! is_provided $MAKEDEP; then
       [ "$VERBOSE" != "TRUE" ] && printf "\n"
       LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
       PACMAN_FLAGS="--asdeps" VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
-      DEPENDENCY_OF="makedependency of ${pkgname}" \
-      ${CMD_BIN} --notitle --noresume --builddeps --install $MAKEDEP || FAILED=1
+      DEPENDENCY_OF="makedependency of $pkgname" \
+      $CMD_BIN --notitle --noresume --builddeps --install $MAKEDEP || FAILED=1
       rm -rf LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
       [ "$FAILED" == "1" ] && return 1
       MAKEDEPS_INSTALLED=${MAKEDEPS_INSTALLED}${MAKEDEP}" "
@@ -415,7 +415,7 @@ function get_package_makedepends()
 
 function get_pkgbuild()
 {
-  REPO=`LANG=C pacman -Si ${1} 2> /dev/null \
+  REPO=`LC_ALL=C pacman -Si ${1} 2> /dev/null \
         | grep -m1 Repository \
         | awk -F": " '{ print $2 }'`
   case $REPO in
@@ -427,13 +427,13 @@ function get_pkgbuild()
     *) REPO="aur" ;;
   esac
   if [ "$REPO" != "aur" ]; then
-    ${SYNCCMD} ${SYNCARGS} ${SYNCSERVER}::abs/${CARCH}/${REPO}/${1} ${TMP_PATH}
+    $SYNCCMD $SYNCARGS ${SYNCSERVER}::abs/${CARCH}/${REPO}/${1} ${TMP_PATH}
     if [ ! -e ${TMP_PATH}/${1}/PKGBUILD ]; then
       REPO="aur"
     fi
   fi
   if [ "$REPO" == "aur" ]; then
-    cd ${TMP_PATH}
+    cd $TMP_PATH
     wget http://aur.archlinux.org/packages/${1}/${1}.tar.gz
     tar xfz ./${1}.tar.gz
     rm -rf ./${1}.tar.gz
@@ -452,7 +452,7 @@ function get_pkginfo()
 
 function is_installed()
 {
-  if grep -qrl --include="desc" "^$1$" "$PACMANROOT/local"; then
+  if grep -qrl --include="desc" "^$1$" "${PACMANROOT}/local"; then
     return 0;
   else
     return 1;
@@ -471,7 +471,7 @@ function is_installed_cached()
 function is_provided()
 {
   local candidates=(`grep -srl --line-regexp --include="depends" \
-                     "$1" "$PACMANROOT/local"`)
+                     "$1" "${PACMANROOT}/local"`)
   for file in ${candidates[@]};do
     if echo $(cat $file) | grep -q "%PROVIDES%.*$1"; then
       return 0;
@@ -488,24 +488,24 @@ function is_provided()
 function build_multiple_packages()
 {
   check_log_file
-  sed -i '/^$/d' ${LOG_FILE}
-  PACKAGES=`cat ${LOG_FILE}`
-  NUM_PKGS=`cat ${LOG_FILE} | wc -l`
+  sed -i '/^$/d' $LOG_FILE
+  PACKAGES=`cat $LOG_FILE`
+  NUM_PKGS=`cat $LOG_FILE | wc -l`
   ERROR_PKGS=""
   CURRENT_INDEX=1
   for CURRENT_PKG in $PACKAGES; do
     unset CHECK_INSTALL
     print_building
-    if [ "`pacman -Qd ${CURRENT_PKG} 2> /dev/null \
+    if [ "`pacman -Qd $CURRENT_PKG 2> /dev/null \
            | awk -F" " '{print $1}'`" != "" ]; then
       PACMAN_FLAGS="--asdeps"
     fi
-    get_pkgbuild ${CURRENT_PKG} &> /dev/null
+    get_pkgbuild $CURRENT_PKG &> /dev/null
     if [ -f ${TMP_PATH}/${CURRENT_PKG}/PKGBUILD ]; then
       add_carch
       edit_pkgbuild
       get_pkginfo
-      if [ "${BUILDDEPS}" == "TRUE" ]; then
+      if [ "$BUILDDEPS" == "TRUE" ]; then
         get_package_makedepends || FAILED=1
         get_package_depends || FAILED=1
       fi
@@ -523,20 +523,20 @@ function build_multiple_packages()
     fi
     if [ "$CHECK_INSTALL" != "0" ]; then
       rm -rf ${TMP_PATH}/${CURRENT_PKG} &> /dev/null
-      sed -i '/'${CURRENT_PKG}'/d' ${LOG_FILE}
+      sed -i '/'${CURRENT_PKG}'/d' $LOG_FILE
     else
-      ERROR_PKGS=${ERROR_PKGS}$CURRENT_PKG" "
+      ERROR_PKGS=${ERROR_PKGS}${CURRENT_PKG}" "
     fi
     print_checkinstall $CHECK_INSTALL
     (( CURRENT_INDEX++ ))
   done
-  if [ "$KEEPDEPS" != "TRUE" ] && [ "${MAKEDEPS_INSTALLED}" != "" ]; then
+  if [ "$KEEPDEPS" != "TRUE" ] && [ -n "$MAKEDEPS_INSTALLED" ]; then
     print_uninstalling
     pacman -Rd --noconfirm \
-    ${MAKEDEPS_INSTALLED} &> /dev/null || CHECK_UNINSTALL=0
+    $MAKEDEPS_INSTALLED &> /dev/null || CHECK_UNINSTALL=0
     print_checkuninstall $CHECK_UNINSTALL
   fi
-  if [ "$ERROR_PKGS" != "" ] && [ "$DEPENDENCY_OF" == "" ]; then
+  if [ -n "$ERROR_PKGS" ] && [ -z "$DEPENDENCY_OF" ]; then
     print_errorpkgs
     return 1
   else
@@ -547,7 +547,7 @@ function build_multiple_packages()
 
 function check_log_file()
 {
-  if [ ! -e ${LOG_FILE} ]; then
+  if [ ! -e $LOG_FILE ]; then
     print_no_log_file
     exit
   fi
@@ -563,8 +563,8 @@ function clean()
 
 function delete_log()
 {
-  if [ -f ${LOG_FILE} ]; then
-    rm -rf ${LOG_FILE} &> /dev/null
+  if [ -f $LOG_FILE ]; then
+    rm -rf $LOG_FILE &> /dev/null
   fi
 }
 
@@ -573,7 +573,7 @@ function match_repo()
   delete_log
   CURRENT_INDEX=0
   for CURRENT_PKG in $@; do
-    REPO=`LANG=C pacman -Si $CURRENT_PKG 2> /dev/null \
+    REPO=`LC_ALL=C pacman -Si $CURRENT_PKG 2> /dev/null \
           | grep -m1 Repository \
           | awk -F": " '{ print $2 }'`
     case $REPO in
@@ -587,12 +587,12 @@ function match_repo()
     for CURRENT_REPO in $REPO; do
       for CURRENT_TARGET_REPO in $TARGET_REPO; do
         if [ "$CURRENT_REPO" == "$CURRENT_TARGET_REPO" ]; then
-          echo ${CURRENT_PKG} >> ${LOG_FILE}
+          echo $CURRENT_PKG >> $LOG_FILE
         fi
       done
     done
   done
-  PACKAGES=`cat ${LOG_FILE}`
+  PACKAGES=`cat $LOG_FILE`
 }
 
 # END_SECTION - select packages
@@ -600,11 +600,11 @@ function match_repo()
 
 function build_type()
 {
-  if [ "$TARGET_REPO" != "" ]; then
+  if [ -n "$TARGET_REPO" ]; then
     check_log_file
     print_repo "$TARGET_REPO\n"
     print_match_repo
-    match_repo `cat ${LOG_FILE}`
+    match_repo `cat $LOG_FILE`
     print_success "done"
     printf "\n"
   else
@@ -618,7 +618,7 @@ function install()
   if [ "$INSTALLING" == "TRUE" ]; then
     delete_log
     for EXTRA_FLAG in $INSTALLPKGS; do
-      echo ${EXTRA_FLAG} >> ${LOG_FILE}
+      echo $EXTRA_FLAG >> $LOG_FILE
     done
     build_multiple_packages
     exit
@@ -627,11 +627,11 @@ function install()
 
 function read_type()
 {
-  if [ "$TYPES_ENABLED" == "" ] && [ "$REPO_ENABLED" != "" ]; then
+  if [ -z "$TYPES_ENABLED" ] && [ -n "$REPO_ENABLED" ]; then
     printf "No type specified, assuming world...\n\n"
     ENABLED_TYPES="world"
     sleep 1
-  elif [ "$TYPES_ENABLED" != "" ] && [ "$REPO_ENABLED" == "" ]; then
+  elif [ -n "$TYPES_ENABLED" ] && [ -z "$REPO_ENABLED" ]; then
     printf "No repository specified, build all...\n\n"
     sleep 1
   fi
@@ -646,7 +646,7 @@ function read_type()
 
 function resume()
 {
-  if [ -f ${LOG_FILE} ]; then
+  if [ -f $LOG_FILE ]; then
     print_resume_detected
     read RESUME_ANSWER
     if [ "$RESUME_ANSWER" != "n" ]; then
@@ -681,7 +681,7 @@ function sysupgrade()
                      -e "s/-[^-]*-[^-]*$//" \
                | sort`)
     for PACKAGE in ${PACKAGES[@]}; do
-      echo ${PACKAGE} >> ${LOG_FILE}
+      echo $PACKAGE >> $LOG_FILE
     done
     TYPES_ENABLED="TRUE"
     print_success "done"
@@ -694,7 +694,7 @@ function sysupgrade()
 
 function type_deps()
 {
-  pacman -Qd | awk -F" " '{print $1}' > ${LOG_FILE}
+  pacman -Qd | awk -F" " '{print $1}' > $LOG_FILE
   if [ "$DONE_DEPS" != "TRUE" ]; then
     print_type "deps packages"
     build_type
@@ -704,8 +704,7 @@ function type_deps()
 
 function type_explicit()
 {
-  pacman -Qe | awk -F" " '{print $1}' > ${LOG_FILE}
-  EXTRA_YAOURT_OPTIONS=""
+  pacman -Qe | awk -F" " '{print $1}' > $LOG_FILE
   if [ "$DONE_EXPLICIT" != "TRUE" ]; then
     print_type "explicit packages"
     build_type
@@ -715,7 +714,7 @@ function type_explicit()
 
 function type_world()
 {
-  pacman -Q | awk -F" " '{print $1}' > ${LOG_FILE}
+  pacman -Q | awk -F" " '{print $1}' > $LOG_FILE
   if [ "$DONE_WORLD" != "TRUE" ]; then
     print_type "both deps and explicit packages"
     build_type
