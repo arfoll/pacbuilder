@@ -108,11 +108,6 @@ function check_args()
     exit
   fi
   for EXTRA_FLAG in $@; do
-    if [ "$EXTRA_FLAG" == "--nocolor" ]; then
-      NOCOLOR="TRUE"
-    fi
-  done
-  for EXTRA_FLAG in $@; do
     case $EXTRA_FLAG in
       --core) add_repository "core" ;;
       --extra) add_repository "extra" ;;
@@ -129,6 +124,7 @@ function check_args()
       --builddeps) BUILDDEPS="TRUE" ;;
       --edit) VERBOSE="TRUE"; EDIT_PKGBUILD="TRUE" ;;
       --gccinfo) GCCINFO="TRUE" ;;
+      --nocolor) NOCOLOR="TRUE" ;;
       --notitle) NOTITLE="TRUE" ;;
       --clean) CLEAN="TRUE" ;;
       --keepdeps) KEEPDEPS="TRUE" ;;
