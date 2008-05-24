@@ -180,7 +180,7 @@ function print_checkinstall()
 
 function print_checkuninstall()
 {
-  if [ $1 -eq 0 ]; then
+  if [ $1 -eq 1 ]; then
     printf "${C_31M}error!${C_0M}\n"
   else
     printf "${C_32M}uninstalled!${C_0M}\n"
@@ -514,6 +514,7 @@ function build_multiple_packages()
     CHECK_DEPS=0
     CHECK_INSTALL=0
     CHECK_MAKEPKG=0
+    CHECK_UNINSTALL=0
     INDEX_DEP=0
     print_building
     if [ "`pacman -Qd $CURRENT_PKG 2> /dev/null \
@@ -559,7 +560,7 @@ function build_multiple_packages()
      [ -n "$MAKEDEPS_INSTALLED" ]; then
     print_uninstalling_deps
     pacman -Rd --noconfirm \
-    $MAKEDEPS_INSTALLED &> /dev/null || CHECK_UNINSTALL=0
+    $MAKEDEPS_INSTALLED &> /dev/null || CHECK_UNINSTALL=1
     print_checkuninstall $CHECK_UNINSTALL
   fi
   if [ -n "$ERROR_PKGS" ]; then
