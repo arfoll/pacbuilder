@@ -534,7 +534,7 @@ function build_multiple_packages()
           print_installing
         fi
         pacman -U --noconfirm $PACMAN_FLAGS \
-        $pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz || \
+        $pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz &> /dev/null || \
         CHECK_INSTALL=1
       fi
     else
