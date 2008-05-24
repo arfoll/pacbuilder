@@ -519,7 +519,6 @@ function build_multiple_packages()
       sed -i -e "s/dl.sourceforge.net/downloads.sourceforge.net/" \
                 ${TMP_PATH}/${CURRENT_PKG}/PKGBUILD &> /dev/null
       edit_pkgbuild
-      get_pkginfo
       get_package_makedepends || CHECK_DEPS=1
       get_package_depends || CHECK_DEPS=1
       [ $CHECK_DEPS -eq 1 ] && CHECK_INSTALL=1
@@ -532,6 +531,7 @@ function build_multiple_packages()
           makepkg -Af --asroot --noconfirm $NOCOLOR_FLAG || CHECK_MAKEPKG=1
           print_installing
         fi
+        get_pkginfo
         pacman -U --noconfirm $PACMAN_FLAGS \
         $pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz &> /dev/null || \
         CHECK_INSTALL=1
