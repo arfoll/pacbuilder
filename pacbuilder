@@ -161,11 +161,11 @@ function print_building()
 
 function print_checkinstall()
 {
-  if [ "$BUILDDEPS" == "TRUE" ]; then
-    print_building
-  fi
   if [ "$1" == "1" ]; then
     if [ "$2" == "1" ]; then
+      if [ "$BUILDDEPS" == "TRUE" ]; then
+        print_building
+      fi
       printf "${C_31M}missing dependency!${C_0M}\n"
     elif [ "$3" == "1" ]; then
       printf "${C_31M}makepkg failed!${C_0M}\n"
