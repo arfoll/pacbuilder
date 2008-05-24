@@ -153,9 +153,9 @@ function print_building()
   printf "${C_32M}==>${C_0M}"
   printf "${C_1M} Building $CURRENT_PKG"
   if [ -n "$DEPENDENCY_OF" ]; then
-    printf "${C_0M} [$DEPENDENCY_OF] "
+    printf "${C_0M} [$DEPENDENCY_OF] ... "
   else
-    printf "${C_0M} [package $CURRENT_INDEX of $NUM_PKGS] "
+    printf "${C_0M} [package $CURRENT_INDEX of $NUM_PKGS] ... "
   fi
 }
 
@@ -248,9 +248,9 @@ function print_installing()
   printf "${C_32M}==>${C_0M}"
   printf "${C_1M} Installing $pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz"
   if [ -n "$DEPENDENCY_OF" ]; then
-    printf "${C_0M} [$DEPENDENCY_OF] "
+    printf "${C_0M} [$DEPENDENCY_OF] ... "
   else
-    printf "${C_0M} [package $CURRENT_INDEX of $NUM_PKGS] "
+    printf "${C_0M} [package $CURRENT_INDEX of $NUM_PKGS] ... "
   fi
 }
 
@@ -428,7 +428,8 @@ function get_pkgbuild()
   esac
   if [ "$REPO" != "aur" ]; then
     $SYNCCMD $SYNCARGS ${SYNCSERVER}::abs/${CARCH}/${REPO}/${1} ${TMP_PATH}
-    if [ ! -e ${TMP_PATH}/${1}/PKGBUILD ]; then
+    sleep 10
+    if [ ! -f ${TMP_PATH}/${1}/PKGBUILD ]; then
       REPO="aur"
     fi
   fi
@@ -502,6 +503,8 @@ function build_multiple_packages()
     fi
     get_pkgbuild $CURRENT_PKG &> /dev/null
     if [ -f ${TMP_PATH}/${CURRENT_PKG}/PKGBUILD ]; then
+      sed -i -e "s/dl.sourceforge.net/downloads.sourceforge.net/" \
+                ${TMP_PATH}/${CURRENT_PKG}/PKGBUILD &> /dev/null
       add_carch
       edit_pkgbuild
       get_pkginfo
@@ -547,7 +550,7 @@ function build_multiple_packages()
 
 function check_log_file()
 {
-  if [ ! -e $LOG_FILE ]; then
+  if [ ! -f $LOG_FILE ]; then
     print_no_log_file
     exit
   fi
