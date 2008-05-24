@@ -526,14 +526,15 @@ function build_multiple_packages()
         if [ "$VERBOSE" != "TRUE" ]; then
           makepkg -Af --asroot --noconfirm $NOCOLOR_FLAG &> /dev/null || \
           CHECK_MAKEPKG=1
+          get_pkginfo
         else
           printf "\n"
           makepkg -Af --asroot --noconfirm $NOCOLOR_FLAG || CHECK_MAKEPKG=1
+          get_pkginfo
           print_installing
         fi
-        get_pkginfo
         pacman -U --noconfirm $PACMAN_FLAGS \
-        $pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz &> /dev/null || \
+        $pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz || \
         CHECK_INSTALL=1
       fi
     else
