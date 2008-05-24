@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # PacBuilder
 # By Andrea Cimitan
 
@@ -155,22 +155,22 @@ function print_building()
   if [ -n "$DEPENDENCY_OF" ]; then
     printf "${C_0M} [$DEPENDENCY_OF] ... "
   else
-    printf "${C_0M} [package $CURRENT_INDEX of $NUM_PKGS] ... "
+    printf "${C_0M} [package $INDEX_PKG of $NUM_PKGS] ... "
   fi
 }
 
 function print_building_dep()
 {
-  printf "${C_33M}requires $1!${C_0M}"
+  printf "${C_33M}depends on $1!${C_0M}"
 }
 
 function print_checkinstall()
 {
+  if [ $INDEX_DEP -gt 0 ]; then
+    print_building
+  fi
   if [ "$1" == "1" ]; then
     if [ "$2" == "1" ]; then
-      if [ "$BUILDDEPS" == "TRUE" ]; then
-        print_building
-      fi
       printf "${C_31M}missing dependency!${C_0M}\n"
     elif [ "$3" == "1" ]; then
       printf "${C_31M}makepkg failed!${C_0M}\n"
@@ -264,7 +264,7 @@ function print_installing()
   if [ -n "$DEPENDENCY_OF" ]; then
     printf "${C_0M} [$DEPENDENCY_OF] ... "
   else
-    printf "${C_0M} [package $CURRENT_INDEX of $NUM_PKGS] ... "
+    printf "${C_0M} [package $INDEX_PKG of $NUM_PKGS] ... "
   fi
 }
 
@@ -329,10 +329,10 @@ function print_type()
   printf "${C_1M}Type:${C_0M} $1\n"
 }
 
-function print_uninstalling()
+function print_uninstalling_deps()
 {
   printf "${C_33M}==>${C_0M}"
-  printf "${C_1M} Uninstalling:${C_0M} $MAKEDEPS_INSTALLED... "
+  printf "${C_1M} Uninstalling dependencies:${C_0M} $MAKEDEPS_INSTALLED... "
 }
 
 # END_SECTION - print to stdout
@@ -389,6 +389,7 @@ function get_package_depends()
        ! is_installed $DEP &&
        ! is_provided $DEP; then
       [ "$BUILDDEPS" != "TRUE" ] && return 1
+      (( INDEX_DEP++ ))
       print_building_dep $DEP
       [ "$VERBOSE" != "TRUE" ] && printf "\n"
       LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
@@ -404,7 +405,7 @@ function get_package_depends()
 
 function get_package_makedepends()
 {
-  unset makedepends pkgname MAKEDEPS MAKEDEPS_INSTALLED
+  unset makedepends pkgname MAKEDEPS
   source ./PKGBUILD
   for MAKEDEP in $(echo "${makedepends[@]}" | tr -d '\\'); do
     MAKEDEPS[${#MAKEDEPS[@]}]=$(echo $MAKEDEP | sed 's/=.*//' \
@@ -417,6 +418,7 @@ function get_package_makedepends()
        ! is_installed $MAKEDEP &&
        ! is_provided $MAKEDEP; then
       [ "$BUILDDEPS" != "TRUE" ] && return 1
+      (( INDEX_DEP++ ))
       print_building_dep $MAKEDEP
       [ "$VERBOSE" != "TRUE" ] && printf "\n"
       LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
@@ -425,7 +427,7 @@ function get_package_makedepends()
       $CMD_BIN --notitle --noresume --builddeps --install $MAKEDEP || FAILED=1
       rm -rf LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
       [ "$FAILED" == "1" ] && return 1
-      MAKEDEPS_INSTALLED=${MAKEDEPS_INSTALLED}${MAKEDEP}" "
+      export MAKEDEPS_INSTALLED=${MAKEDEPS_INSTALLED}${MAKEDEP}" "
     fi
   done
   return 0
@@ -446,7 +448,6 @@ function get_pkgbuild()
   esac
   if [ "$REPO" != "aur" ]; then
     $SYNCCMD $SYNCARGS ${SYNCSERVER}::abs/${CARCH}/${REPO}/${1} ${TMP_PATH}
-    sleep 10
     if [ ! -f ${TMP_PATH}/${1}/PKGBUILD ]; then
       REPO="aur"
     fi
@@ -511,11 +512,12 @@ function build_multiple_packages()
   PACKAGES=`cat $LOG_FILE`
   NUM_PKGS=`cat $LOG_FILE | wc -l`
   ERROR_PKGS=""
-  CURRENT_INDEX=1
+  INDEX_PKG=1
   for CURRENT_PKG in $PACKAGES; do
     CHECK_DEPS=0
     CHECK_INSTALL=0
     CHECK_MAKEPKG=0
+    INDEX_DEP=0
     print_building
     if [ "`pacman -Qd $CURRENT_PKG 2> /dev/null \
            | awk -F" " '{print $1}'`" != "" ]; then
@@ -553,10 +555,11 @@ function build_multiple_packages()
       ERROR_PKGS=${ERROR_PKGS}${CURRENT_PKG}" "
     fi
     print_checkinstall $CHECK_INSTALL $CHECK_DEPS $CHECK_MAKEPKG
-    (( CURRENT_INDEX++ ))
+    (( INDEX_PKG++ ))
   done
-  if [ "$KEEPDEPS" != "TRUE" ] && [ -n "$MAKEDEPS_INSTALLED" ]; then
-    print_uninstalling
+  if [ "$KEEPDEPS" != "TRUE" ] &&
+     [ -n "$MAKEDEPS_INSTALLED" ]; then
+    print_uninstalling_deps
     pacman -Rd --noconfirm \
     $MAKEDEPS_INSTALLED &> /dev/null || CHECK_UNINSTALL=0
     print_checkuninstall $CHECK_UNINSTALL
@@ -598,7 +601,7 @@ function delete_log()
 function match_repo()
 {
   delete_log
-  CURRENT_INDEX=0
+  INDEX_PKG=0
   for CURRENT_PKG in $@; do
     REPO=`LC_ALL=C pacman -Si $CURRENT_PKG 2> /dev/null \
           | grep -m1 Repository \
