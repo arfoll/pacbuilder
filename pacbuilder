@@ -180,7 +180,7 @@ function print_checkinstall()
 
 function print_checkuninstall()
 {
-  if [ "$1" == "0" ]; then
+  if [ $1 -eq 0 ]; then
     printf "${C_31M}error!${C_0M}\n"
   else
     printf "${C_32M}uninstalled!${C_0M}\n"
