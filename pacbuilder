@@ -165,10 +165,10 @@ function print_checkinstall()
   if [ $INDEX_DEP -gt 0 ]; then
     print_building
   fi
-  if [ "$1" == "1" ]; then
-    if [ "$2" == "1" ]; then
+  if [ $1 -eq 1 ]; then
+    if [ $2 -eq 1 ]; then
       printf "${C_31M}missing dependency!${C_0M}\n"
-    elif [ "$3" == "1" ]; then
+    elif [ $3 -eq 1 ]; then
       printf "${C_31M}makepkg failed!${C_0M}\n"
     else
       printf "${C_31M}error!${C_0M}\n"
