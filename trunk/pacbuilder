@@ -525,11 +525,11 @@ function build_multiple_packages()
       [ $CHECK_DEPS -eq 1 ] && CHECK_INSTALL=1
       if [ $CHECK_DEPS -eq 0 ]; then
         if [ "$VERBOSE" != "TRUE" ]; then
-          makepkg -A --asroot --noconfirm $NOCOLOR_FLAG &> /dev/null || \
+          makepkg -Af --asroot --noconfirm $NOCOLOR_FLAG &> /dev/null || \
           CHECK_MAKEPKG=1
         else
           printf "\n"
-          makepkg -A --asroot --noconfirm $NOCOLOR_FLAG || CHECK_MAKEPKG=1
+          makepkg -Af --asroot --noconfirm $NOCOLOR_FLAG || CHECK_MAKEPKG=1
           print_installing
         fi
         pacman -U --noconfirm $PACMAN_FLAGS \
