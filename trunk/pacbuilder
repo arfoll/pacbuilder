@@ -161,8 +161,12 @@ function print_building()
 
 function print_checkinstall()
 {
-  if [ "$1" == "0" ]; then
-    printf "${C_31M}error!${C_0M}\n"
+  if [ "$1" == "1" ]; then
+    if [ "$2" == "1" ]; then
+      printf "${C_31M}missing dependency!${C_0M}\n"
+    else
+      printf "${C_31M}error!${C_0M}\n"
+    fi
   else
     printf "${C_32M}installed!${C_0M}\n"
   fi
@@ -318,7 +322,7 @@ function print_type()
 function print_uninstalling()
 {
   printf "${C_33M}==>${C_0M}"
-  printf "${C_1M} Uninstalling:${C_0M} $MAKEDEPS_INSTALLED"
+  printf "${C_1M} Uninstalling:${C_0M} $MAKEDEPS_INSTALLED... "
 }
 
 # END_SECTION - print to stdout
@@ -374,6 +378,7 @@ function get_package_depends()
     if [ "$DEP" != "$pkgname" ] &&
        ! is_installed $DEP &&
        ! is_provided $DEP; then
+      [ "$BUILDDEPS" != "TRUE" ] && return 1
       [ "$VERBOSE" != "TRUE" ] && printf "\n"
       LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
       NOCOLOR=$NOCOLOR VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
@@ -400,6 +405,7 @@ function get_package_makedepends()
     if [ "$MAKEDEP" != "$pkgname" ] &&
        ! is_installed $MAKEDEP &&
        ! is_provided $MAKEDEP; then
+      [ "$BUILDDEPS" != "TRUE" ] && return 1
       [ "$VERBOSE" != "TRUE" ] && printf "\n"
       LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
       PACMAN_FLAGS="--asdeps" VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
@@ -495,7 +501,7 @@ function build_multiple_packages()
   ERROR_PKGS=""
   CURRENT_INDEX=1
   for CURRENT_PKG in $PACKAGES; do
-    unset CHECK_INSTALL
+    unset CHECK_DEPS CHECK_INSTALL
     print_building
     if [ "`pacman -Qd $CURRENT_PKG 2> /dev/null \
            | awk -F" " '{print $1}'`" != "" ]; then
@@ -508,11 +514,9 @@ function build_multiple_packages()
       add_carch
       edit_pkgbuild
       get_pkginfo
-      if [ "$BUILDDEPS" == "TRUE" ]; then
-        get_package_makedepends || FAILED=1
-        get_package_depends || FAILED=1
-      fi
-      [ "$FAILED" == "1" ] && CHECK_INSTALL=0
+      get_package_makedepends || CHECK_DEPS=1
+      get_package_depends || CHECK_DEPS=1
+      [ "$CHECK_DEPS" == "1" ] && CHECK_INSTALL=1
       if [ "$VERBOSE" != "TRUE" ]; then
         makepkg --asroot --noconfirm $NOCOLOR_FLAG &> /dev/null
       else
@@ -520,9 +524,9 @@ function build_multiple_packages()
         print_installing
       fi
       pacman -U --noconfirm $PACMAN_FLAGS  \
-      $pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz &> /dev/null || CHECK_INSTALL=0
+      $pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz &> /dev/null || CHECK_INSTALL=1
     else
-      CHECK_INSTALL=0
+      CHECK_INSTALL=1
     fi
     if [ "$CHECK_INSTALL" != "0" ]; then
       rm -rf ${TMP_PATH}/${CURRENT_PKG} &> /dev/null
@@ -530,7 +534,7 @@ function build_multiple_packages()
     else
       ERROR_PKGS=${ERROR_PKGS}${CURRENT_PKG}" "
     fi
-    print_checkinstall $CHECK_INSTALL
+    print_checkinstall $CHECK_INSTALL $CHECK_DEPS
     (( CURRENT_INDEX++ ))
   done
   if [ "$KEEPDEPS" != "TRUE" ] && [ -n "$MAKEDEPS_INSTALLED" ]; then
