@@ -157,7 +157,7 @@ function print_building()
 
 function print_building_dep()
 {
-  printf "${C_33M}depends on $1!${C_0M}"
+  printf "${C_33M}depends on $1!${C_0M}\n"
 }
 
 function print_checkinstall()
@@ -344,8 +344,8 @@ function add_carch()
 function edit_pkgbuild()
 {
   if [ "$VERBOSE" == "TRUE" ]; then
-    printf "\n"
     if [ "$EDIT_PKGBUILD" == "TRUE" ]; then
+      printf "\n"
       if [ -f ./PKGBUILD ]; then
         print_edit_pkgbuild
         read EDIT_ANSWER
@@ -373,6 +373,7 @@ function get_community_category()
 function get_package_depends()
 {
   unset depends pkgname DEPS
+  CHECK_DEP=0
   source ./PKGBUILD
   for DEP in $(echo "${depends[@]}" | tr -d '\\'); do
     DEPS[${#DEPS[@]}]=$(echo $DEP | sed 's/=.*//' \
@@ -387,13 +388,12 @@ function get_package_depends()
       [ "$BUILDDEPS" != "TRUE" ] && return 1
       (( INDEX_DEP++ ))
       print_building_dep $DEP
-      [ "$VERBOSE" != "TRUE" ] && printf "\n"
       LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
       NOCOLOR=$NOCOLOR VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
       DEPENDENCY_OF="dependency of $pkgname" PACMAN_FLAGS="--asdeps" \
-      $CMD_BIN --notitle --noresume --builddeps --install $DEP || FAILED=1
+      $CMD_BIN --notitle --noresume --builddeps --install $DEP || CHECK_DEP=1
       rm -rf LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
-      [ "$FAILED" == "1" ] && return 1
+      [ $CHECK_DEP -eq 1 ] && return 1
     fi
   done
   return 0
@@ -402,6 +402,7 @@ function get_package_depends()
 function get_package_makedepends()
 {
   unset makedepends pkgname MAKEDEPS
+  CHECK_MAKEDEP=0
   source ./PKGBUILD
   for MAKEDEP in $(echo "${makedepends[@]}" | tr -d '\\'); do
     MAKEDEPS[${#MAKEDEPS[@]}]=$(echo $MAKEDEP | sed 's/=.*//' \
@@ -416,14 +417,14 @@ function get_package_makedepends()
       [ "$BUILDDEPS" != "TRUE" ] && return 1
       (( INDEX_DEP++ ))
       print_building_dep $MAKEDEP
-      [ "$VERBOSE" != "TRUE" ] && printf "\n"
       LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
       PACMAN_FLAGS="--asdeps" VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
       DEPENDENCY_OF="makedependency of $pkgname" \
-      $CMD_BIN --notitle --noresume --builddeps --install $MAKEDEP || FAILED=1
+      $CMD_BIN --notitle --noresume --builddeps --install $MAKEDEP || \
+      CHECK_MAKEDEP=1
       rm -rf LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
-      [ "$FAILED" == "1" ] && return 1
-      export MAKEDEPS_INSTALLED=${MAKEDEPS_INSTALLED}${MAKEDEP}" "
+      [ $CHECK_MAKEDEP -eq 1 ] && return 1
+      MAKEDEPS_INSTALLED=${MAKEDEPS_INSTALLED}${MAKEDEP}" "
     fi
   done
   return 0
@@ -528,12 +529,13 @@ function build_multiple_packages()
       get_pkginfo
       get_package_makedepends || CHECK_DEPS=1
       get_package_depends || CHECK_DEPS=1
-      [ "$CHECK_DEPS" == "1" ] && CHECK_INSTALL=1
-      if [ "$CHECK_DEPS" != "1" ]; then
+      [ $CHECK_DEPS -eq 1 ] && CHECK_INSTALL=1
+      if [ $CHECK_DEPS -eq 0 ]; then
         if [ "$VERBOSE" != "TRUE" ]; then
           makepkg --asroot --noconfirm $NOCOLOR_FLAG &> /dev/null || \
           CHECK_MAKEPKG=1
         else
+          printf "\n"
           makepkg --asroot --noconfirm $NOCOLOR_FLAG || CHECK_MAKEPKG=1
           print_installing
         fi
@@ -544,7 +546,7 @@ function build_multiple_packages()
     else
       CHECK_INSTALL=1
     fi
-    if [ "$CHECK_INSTALL" != "1" ]; then
+    if [ $CHECK_INSTALL -eq 0 ]; then
       rm -rf ${TMP_PATH}/${CURRENT_PKG} &> /dev/null
       sed -i '/'${CURRENT_PKG}'/d' $LOG_FILE
     else
