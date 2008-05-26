@@ -157,6 +157,9 @@ function print_building()
 
 function print_building_dep()
 {
+  if [ $INDEX_DEP -gt 1 ]; then
+    print_building
+  fi
   printf "${YELL}depends on $1!${DEFA}\n"
 }
 
