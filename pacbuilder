@@ -351,6 +351,22 @@ function edit_pkgbuild()
   fi
 }
 
+function get_json_version()
+{
+  wget -q -O - "http://aur.archlinux.org/rpc.php?type=info&arg=${1}" \
+  | sed -e 's/^.*{*"Version":"//' -e 's/",".*$//'
+}
+
+function get_aur_pkgrel()
+{
+  fetch_json $1 | awk -F"-" '{ print $1 }'
+}
+
+function get_aur_pkgver()
+{
+  fetch_json $1 | awk -F"-" '{ print $1 }'
+}
+
 function get_community_category()
 {
   AUR_ID=`wget -q -O - "http://aur.archlinux.org/rpc.php?type=info&arg=${1}" \
@@ -460,6 +476,22 @@ function get_pkginfo()
 # END_SECTION - pkgbuild parsing and editing
 # BEGIN_SECTION - fetch pacman database
 
+function get_local_version()
+{
+  grep -srl --line-regexp --include="desc" "$1" "$PACMANROOT/local" \
+  | xargs grep -A 1 "^%VERSION%$" | tail -n 1
+}
+
+function get_local_pkgrel()
+{
+  get_local_version $1 | awk -F"-" '{print $2}'
+}
+
+function get_local_pkgver()
+{
+  get_local_version $1 | awk -F"-" '{print $1}'
+}
+
 function is_installed()
 {
   if grep -qrl --include="desc" "^$1$" "${PACMANROOT}/local"; then
@@ -472,6 +504,52 @@ function is_installed()
 function is_installed_cached()
 {
   if [ `pacman -Q ${1} 2> /dev/null | wc -l` != "0" ]; then
+    return 0;
+  else
+    return 1;
+  fi
+}
+
+function is_newer_than()
+{
+  local VER=( $(echo $1 | tr "[:punct:]" "\ " | sed 's/[a-zA-Z]/ &/g') )
+  local LVER=( $(echo $2 | tr "[:punct:]" "\ " | sed 's/[a-zA-Z]/ &/g') )
+  if [ ${#VER[@]} -gt ${#LVER[@]} ]; then 
+    VERLENGTH=${#VER[@]}
+  else
+    VERLENGTH=${#LVER[@]}
+  fi
+
+  for I_INDEX in `seq 0 $((${VERLENGTH}-1))`; do 
+    if `is_num ${VER[$I_INDEX]}` &&
+       `is_num ${LVER[$I_INDEX]}`; then
+      if [ ${VER[$I_INDEX]} -eq ${LVER[$I_INDEX]} ]; then
+        continue;
+      fi
+      if [ ${VER[$I_INDEX]} -gt ${LVER[$I_INDEX]} ]; then
+        return 0;
+      else
+        return 1;
+      fi
+      break
+    elif [ `is_num ${VER[$I_INDEX]}` -ne `is_num ${LVER[$I_INDEX]}` ]; then
+      if [ "${VER[$I_INDEX]}" = "${LVER[$I_INDEX]}" ]; then
+        continue;
+      fi
+      if [ "${VER[$I_INDEX]}" \> "${LVER[$I_INDEX]}" ]; then
+        return 0;
+      else
+        return 1;
+      fi
+      break
+    fi
+  done
+  return 1
+}
+
+function is_num()
+{
+  if let $1 2>/dev/null; then
     return 0;
   else
     return 1;
@@ -700,18 +778,8 @@ function sysupgrade()
   if [ "$SYSUPGRADE" == "TRUE" ]; then
     delete_log
     print_refreshing_database
-    PACKAGES=(`pacman --sync --refresh --sysupgrade --print-uris \
-               | grep "^\(ftp:\/\/\|http:\/\/\|file:\/\/\)" \
-               | sed -e "s/-i686.pkg.tar.gz$//" \
-                     -e "s/-x86_64.pkg.tar.gz$//" \
-                     -e "s/-any.pkg.tar.gz$//" \
-                     -e "s/.pkg.tar.gz//" \
-                     -e "s/^.*\///" \
-                     -e "s/-[^-]*-[^-]*$//" \
-               | sort`)
-    for PACKAGE in ${PACKAGES[@]}; do
-      echo $PACKAGE >> $LOG_FILE
-    done
+    sysupgrade_local
+    sysupgrade_aur
     TYPES_ENABLED="TRUE"
     print_success "done"
     printf "\n"
@@ -719,6 +787,33 @@ function sysupgrade()
     build_type
     exit
   fi
+}
+
+function sysupgrade_aur()
+{
+  for PACKAGE in $(pacman -Qm | awk '{print $1}'); do
+    AUR_VERSION=`get_json_version $PACKAGE`
+    LOCAL_VERSION=`get_local_version $PACKAGE`
+    if `is_newer_than $AUR_VERSION $LOCAL_VERSION`; then
+      echo $PACKAGE >> $LOG_FILE
+    fi
+  done
+}
+
+function sysupgrade_local()
+{
+  PACKAGES=(`pacman --sync --refresh --sysupgrade --print-uris \
+             | grep "^\(ftp:\/\/\|http:\/\/\|file:\/\/\)" \
+             | sed -e "s/-i686.pkg.tar.gz$//" \
+                   -e "s/-x86_64.pkg.tar.gz$//" \
+                   -e "s/-any.pkg.tar.gz$//" \
+                   -e "s/.pkg.tar.gz//" \
+                   -e "s/^.*\///" \
+                   -e "s/-[^-]*-[^-]*$//" \
+             | sort`)
+  for PACKAGE in ${PACKAGES[@]}; do
+    echo $PACKAGE >> $LOG_FILE
+  done
 }
 
 function type_deps()
