@@ -1,6 +1,13 @@
-#!/bin/sh
+#!/bin/bash
 # PacBuilder
 # By Andrea Cimitan
+
+# BEGIN_SECTION - gettext initialization
+
+export TEXTDOMAIN='pacbuilder'
+export TEXTDOMAINDIR='/usr/share/locale'
+
+# END_SECTION - gettext initialization
 
 # BEGIN_SECTION - environment checks
 
@@ -10,7 +17,7 @@ function check_uid()
   E_NONROOT=67
   if [ "$UID" -ne "$ROOT_UID" ]
   then
-    printf "$CMD_NAME requires root permissions to run\n"
+    msg "$(gettext "%s requires root permissions to run\n")" "$CMD_NAME"    
     exit $E_NONROOT
   fi
 }
@@ -18,7 +25,7 @@ function check_uid()
 function check_required_bin()
 {
   if ! which $1 >/dev/null 2>&1; then
-    printf "You need to install $1!\n"
+    msg "$(gettext "You need to install %s!\n")" "$1"    
     exit 1
   fi
 }
@@ -144,6 +151,12 @@ function check_args()
 
 # END_SECTION - command line options
 # BEGIN_SECTION - print to stdout
+
+msg()
+{
+  local mesg=$1; shift
+  printf "==> ${mesg}\n" "$@" >&2
+}
 
 function print_building()
 {
@@ -857,6 +870,7 @@ function type_world()
 
 function main()
 {
+  . gettext.sh
   environment
   check_uid
   check_required_binaries
