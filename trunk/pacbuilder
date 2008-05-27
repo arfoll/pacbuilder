@@ -56,7 +56,8 @@ function environment()
   CMD_NAME="PacBuilder"
   LICENSE="GPLv3"
   [ -z "$CARCH" ] && CARCH="i686"
-  [ -z "$TMP_PATH" ] && TMP_PATH=/tmp/${CMD_BIN}/build
+  [ -z "$TMP_PATH" ] && TMP_PATH=/tmp/${CMD_BIN}
+  [ -z "$BUILD_DIR" ] && BUILD_DIR=${TMP_PATH}/build
   [ -z "$LOG_FILE" ] && LOG_FILE=/var/log/${CMD_BIN}-packages.log
   SYNCCMD="rsync"
   SYNCARGS="-mrtv --no-motd --delete-after --delete-excluded"
@@ -66,7 +67,7 @@ function environment()
               | awk '{print $4}' \
               | sed "s/\/$//"`
 
-  mkdir -p $TMP_PATH
+  mkdir -p $BUILD_DIR
 }
 
 # END_SECTION - environment checks
@@ -400,11 +401,11 @@ function get_package_depends()
       [ "$BUILDDEPS" != "TRUE" ] && return 1
       (( INDEX_DEP++ ))
       print_building_dep $DEP
-      LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
+      LOG_FILE=${TMP_PATH}/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
       NOCOLOR=$NOCOLOR VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
       DEPENDENCY_OF="dependency of $pkgname" PACMAN_FLAGS="--asdeps" \
       $CMD_BIN --notitle --noresume --builddeps --install $DEP || CHECK_DEP=1
-      rm -rf LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
+      rm -rf LOG_FILE=${TMP_PATH}/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
       [ $CHECK_DEP -eq 1 ] && return 1
     fi
   done
@@ -429,12 +430,12 @@ function get_package_makedepends()
       [ "$BUILDDEPS" != "TRUE" ] && return 1
       (( INDEX_DEP++ ))
       print_building_dep $MAKEDEP
-      LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
+      LOG_FILE=${TMP_PATH}/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
       PACMAN_FLAGS="--asdeps" VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
       DEPENDENCY_OF="makedependency of $pkgname" \
       $CMD_BIN --notitle --noresume --builddeps --install $MAKEDEP || \
       CHECK_MAKEDEP=1
-      rm -rf LOG_FILE=/tmp/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
+      rm -rf LOG_FILE=${TMP_PATH}/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
       [ $CHECK_MAKEDEP -eq 1 ] && return 1
       MAKEDEPS_INSTALLED=${MAKEDEPS_INSTALLED}${MAKEDEP}" "
     fi
@@ -456,18 +457,18 @@ function get_pkgbuild()
     *) REPO="aur" ;;
   esac
   if [ "$REPO" != "aur" ]; then
-    $SYNCCMD $SYNCARGS ${SYNCSERVER}::abs/${CARCH}/${REPO}/${1} ${TMP_PATH}
-    if [ ! -f ${TMP_PATH}/${1}/PKGBUILD ]; then
+    $SYNCCMD $SYNCARGS ${SYNCSERVER}::abs/${CARCH}/${REPO}/${1} ${BUILD_DIR}
+    if [ ! -f ${BUILD_DIR}/${1}/PKGBUILD ]; then
       REPO="aur"
     fi
   fi
   if [ "$REPO" == "aur" ]; then
-    cd $TMP_PATH
+    cd $BUILD_DIR
     wget http://aur.archlinux.org/packages/${1}/${1}.tar.gz
     tar xfz ./${1}.tar.gz
     rm -rf ./${1}.tar.gz
   fi
-  cd ${TMP_PATH}/${1}
+  cd ${BUILD_DIR}/${1}
 }
 
 function get_pkginfo()
@@ -561,10 +562,10 @@ function is_num()
 
 function is_provided()
 {
-  local candidates=(`grep -srl --line-regexp --include="depends" \
+  local CANDIDATES=(`grep -srl --line-regexp --include="depends" \
                      "$1" "${PACMANROOT}/local"`)
-  for file in ${candidates[@]};do
-    if echo $(cat $file) | grep -q "%PROVIDES%.*$1"; then
+  for FILE in ${CANDIDATES[@]};do
+    if echo $(cat $FILE) | grep -q "%PROVIDES%.*$1"; then
       return 0;
     else
       continue;
@@ -596,9 +597,9 @@ function build_multiple_packages()
       PACMAN_FLAGS="--asdeps"
     fi
     get_pkgbuild $CURRENT_PKG &> /dev/null
-    if [ -f ${TMP_PATH}/${CURRENT_PKG}/PKGBUILD ]; then
+    if [ -f ${BUILD_DIR}/${CURRENT_PKG}/PKGBUILD ]; then
       sed -i -e "s/dl.sourceforge.net/downloads.sourceforge.net/" \
-                ${TMP_PATH}/${CURRENT_PKG}/PKGBUILD &> /dev/null
+          ${BUILD_DIR}/${CURRENT_PKG}/PKGBUILD &> /dev/null
       edit_pkgbuild
       get_package_makedepends || CHECK_DEPS=1
       get_package_depends || CHECK_DEPS=1
@@ -622,7 +623,7 @@ function build_multiple_packages()
       CHECK_INSTALL=1
     fi
     if [ $CHECK_INSTALL -eq 0 ]; then
-      rm -rf ${TMP_PATH}/${CURRENT_PKG} &> /dev/null
+      rm -rf ${BUILD_DIR}/${CURRENT_PKG} &> /dev/null
       sed -i '/'${CURRENT_PKG}'/d' $LOG_FILE
     else
       ERROR_PKGS=${ERROR_PKGS}${CURRENT_PKG}" "
