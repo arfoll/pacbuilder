@@ -4,6 +4,8 @@ High piority:
 
 Medium priority:
 * Gettext support
+* Add an option file under /etc
+  [easy to do, just do a "source /etc/pacbuilder.conf" and grab the variables]
 
 Low priority:
 * Save the makedependencies to unistall under /var/log/something, so if you
