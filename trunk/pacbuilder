@@ -63,9 +63,9 @@ function environment()
   CMD_NAME="PacBuilder"
   LICENSE="GPLv3"
   [ -z "$CARCH" ] && CARCH="i686"
-  [ -z "$TMP_PATH" ] && TMP_PATH=/tmp/${CMD_BIN}
-  [ -z "$BUILD_DIR" ] && BUILD_DIR=${TMP_PATH}/build
+  [ -z "$TMP_PATH" ] && TMP_PATH=/tmp
   [ -z "$LOG_FILE" ] && LOG_FILE=/var/log/${CMD_BIN}-packages.log
+  BUILD_DIR=${TMP_PATH}/${CMD_BIN}/build
   SYNCCMD="rsync"
   SYNCARGS="-mrtv --no-motd --delete-after --delete-excluded"
   SYNCSERVER="rsync.archlinux.org"
@@ -687,8 +687,8 @@ function delete_log()
 
 function delete_tmp()
 {
-  if [ -d $TMP_PATH ]; then
-    rm -rf $TMP_PATH &> /dev/null
+  if [ -d ${TMP_PATH}/${CMD_BIN} ]; then
+    rm -rf ${TMP_PATH}/${CMD_BIN} &> /dev/null
   fi
 }
 
