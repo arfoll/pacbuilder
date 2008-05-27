@@ -1,0 +1,11 @@
+High piority:
+* Improve flags handling system, following the one used by pacman/makepkg.
+  I would like to install with pacbuilder -S and do an upgrade with -Su
+
+Medium priority:
+* Gettext support
+
+Low priority:
+* Save the makedependencies to unistall under /var/log/something, so if you
+  reboot your computer, you can still remove the makedependencies
+* Provide a PKGBUILD for this package, and commit here
