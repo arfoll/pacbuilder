@@ -212,13 +212,13 @@ function print_clean()
   printf "${YELL}==> WARNING:${DEFA}"
   printf "${BOLD} Do you want to delete your log file and build directory?\n"
   printf "You will not be able to resume it in the future."
-  printf " Are you sure? (n/y): ${DEFA}"
+  printf " Are you sure? (y/N): ${DEFA}"
 }
 
 function print_edit_pkgbuild()
 {
   printf "${YELL}==> EDIT PKGBUILD:${DEFA}"
-  printf "${BOLD} Do you want to edit this PKGBUILD? (y/n):${DEFA} "
+  printf "${BOLD} Do you want to edit this PKGBUILD? (Y/n):${DEFA} "
 }
 
 function print_errorpkgs()
@@ -310,14 +310,14 @@ function print_resume_detected()
 {
   printf "${YELL}==> ATTENTION:${DEFA}"
   printf "${BOLD} Previous build detected."
-  printf " Do you want to resume? (y/n):${DEFA} "
+  printf " Do you want to resume? (Y/n):${DEFA} "
 }
 
 function print_resume_overwrite()
 {
   printf "${YELL}==> ATTENTION:${DEFA}"
   printf "${BOLD} Your previous build will be overwritten."
-  printf " Continue? (n/y):${DEFA} "
+  printf " Continue? (y/N):${DEFA} "
 }
 
 function print_success()
