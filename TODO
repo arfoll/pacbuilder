@@ -11,5 +11,4 @@ Medium priority:
 Low priority:
 * Save the makedependencies to unistall under /var/log/something, so if you
   reboot your computer, you can still remove the makedependencies
-* Provide a PKGBUILD for this package, and commit here
 * write something in the googlecode's project wiki
