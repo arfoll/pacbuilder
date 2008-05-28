@@ -16,7 +16,7 @@ function check_uid()
   E_NONROOT=67
   if [ "$UID" -ne "$ROOT_UID" ]
   then
-    msg "$(gettext "%s requires root permissions to run\n")" "$CMD_NAME"    
+    msg "$(gettext "%s requires root permissions to run\n")" "$CMD_NAME"
     exit $E_NONROOT
   fi
 }
@@ -24,7 +24,7 @@ function check_uid()
 function check_required_bin()
 {
   if ! which $1 >/dev/null 2>&1; then
-    msg "$(gettext "You need to install %s!\n")" "$1"    
+    msg "$(gettext "You need to install %s!\n")" "$1"
     exit 1
   fi
 }
@@ -533,17 +533,17 @@ function is_installed_cached()
   fi
 }
 
-function is_newer_than()
+function is_newer()
 {
   local VER=( $(echo $1 | tr "[:punct:]" "\ " | sed 's/[a-zA-Z]/ &/g') )
   local LVER=( $(echo $2 | tr "[:punct:]" "\ " | sed 's/[a-zA-Z]/ &/g') )
-  if [ ${#VER[@]} -gt ${#LVER[@]} ]; then 
+  if [ ${#VER[@]} -gt ${#LVER[@]} ]; then
     VERLENGTH=${#VER[@]}
   else
     VERLENGTH=${#LVER[@]}
   fi
 
-  for I_INDEX in `seq 0 $((${VERLENGTH}-1))`; do 
+  for I_INDEX in `seq 0 $((${VERLENGTH}-1))`; do
     if `is_num ${VER[$I_INDEX]}` &&
        `is_num ${LVER[$I_INDEX]}`; then
       if [ ${VER[$I_INDEX]} -eq ${LVER[$I_INDEX]} ]; then
@@ -570,12 +570,73 @@ function is_newer_than()
   return 1
 }
 
+function is_newer_or_equal()
+{
+  local VER=( $(echo $1 | tr "[:punct:]" "\ " | sed 's/[a-zA-Z]/ &/g') )
+  local LVER=( $(echo $2 | tr "[:punct:]" "\ " | sed 's/[a-zA-Z]/ &/g') )
+  if [ ${#VER[@]} -gt ${#LVER[@]} ]; then
+    VERLENGTH=${#VER[@]}
+  else
+    VERLENGTH=${#LVER[@]}
+  fi
+
+  for I_INDEX in `seq 0 $((${VERLENGTH}-1))`; do
+    if `is_num ${VER[$I_INDEX]}` &&
+       `is_num ${LVER[$I_INDEX]}`; then
+      if [ ${VER[$I_INDEX]} -eq ${LVER[$I_INDEX]} ]; then
+        if [ $I_INDEX -eq $((${VERLENGTH}-1)) ]; then
+          return 0
+        fi
+        continue;
+      fi
+      if [ ${VER[$I_INDEX]} -gt ${LVER[$I_INDEX]} ]; then
+        return 0;
+      else
+        return 1;
+      fi
+      break
+    elif [ `is_num ${VER[$I_INDEX]}` -ne `is_num ${LVER[$I_INDEX]}` ]; then
+      if [ "${VER[$I_INDEX]}" = "${LVER[$I_INDEX]}" ]; then
+        if [ $I_INDEX -eq $((${VERLENGTH}-1)) ]; then
+          return 0
+        fi
+        continue;
+      fi
+      if [ "${VER[$I_INDEX]}" \> "${LVER[$I_INDEX]}" ]; then
+        return 0;
+      else
+        return 1;
+      fi
+      break
+    fi
+  done
+  return 1
+}
+
 function is_num()
 {
   if let $1 2>/dev/null; then
     return 0;
   else
     return 1;
+  fi
+}
+
+function is_older()
+{
+  if ! is_newer_or_equal $1 $2; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+function is_older_or_equal()
+{
+  if ! is_newer $1 $2; then
+    return 0
+  else
+    return 1
   fi
 }
 
@@ -818,7 +879,7 @@ function sysupgrade_aur()
   for PACKAGE in $(pacman -Qm | awk '{print $1}'); do
     AUR_VERSION=`get_json_version $PACKAGE`
     LOCAL_VERSION=`get_local_version $PACKAGE`
-    if `is_newer_than $AUR_VERSION $LOCAL_VERSION`; then
+    if `is_newer $AUR_VERSION $LOCAL_VERSION`; then
       echo $PACKAGE >> $LOG_FILE
     fi
   done
