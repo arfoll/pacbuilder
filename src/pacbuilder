@@ -419,6 +419,7 @@ function get_package_depends()
       print_building_dep $DEP
       LOG_FILE=${TMP_PATH}/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
       NOCOLOR=$NOCOLOR VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
+      GCCINFO="" \
       DEPENDENCY_OF="dependency of $pkgname" PACMAN_FLAGS="--asdeps" \
       $CMD_BIN --notitle --noresume --builddeps --install $DEP || CHECK_DEP=1
       rm -rf LOG_FILE=${TMP_PATH}/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
@@ -448,7 +449,8 @@ function get_package_makedepends()
       print_building_dep $MAKEDEP
       LOG_FILE=${TMP_PATH}/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
       PACMAN_FLAGS="--asdeps" VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
-      DEPENDENCY_OF="makedependency of $pkgname" \
+      GCCINFO="" \
+      DEPENDENCY_OF="makedependency of $pkgname" PACMAN_FLAGS="--asdeps" \
       $CMD_BIN --notitle --noresume --builddeps --install $MAKEDEP || \
       CHECK_MAKEDEP=1
       rm -rf LOG_FILE=${TMP_PATH}/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
