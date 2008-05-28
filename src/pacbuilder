@@ -188,6 +188,8 @@ function print_checkinstall()
       printf "${LRED}missing dependency!${DEFA}\n"
     elif [ $3 -eq 1 ]; then
       printf "${LRED}makepkg failed!${DEFA}\n"
+    elif [ $4 -eq 1 ]; then
+      printf "${LRED}PKGBUILD not found!${DEFA}\n"
     else
       printf "${LRED}error!${DEFA}\n"
     fi
@@ -478,11 +480,12 @@ function get_pkgbuild()
   fi
   if [ "$REPO" == "aur" ]; then
     cd $BUILD_DIR
-    wget http://aur.archlinux.org/packages/${1}/${1}.tar.gz
+    wget http://aur.archlinux.org/packages/${1}/${1}.tar.gz || return 1
     tar xfz ./${1}.tar.gz
     rm -rf ./${1}.tar.gz
   fi
   cd ${BUILD_DIR}/${1}
+  return 0
 }
 
 function get_pkginfo()
@@ -601,6 +604,7 @@ function build_multiple_packages()
   INDEX_PKG=1
   for CURRENT_PKG in $PACKAGES; do
     CHECK_DEPS=0
+    CHECK_FOUND=0
     CHECK_INSTALL=0
     CHECK_MAKEPKG=0
     CHECK_UNINSTALL=0
@@ -610,7 +614,7 @@ function build_multiple_packages()
            | awk -F" " '{print $1}'`" != "" ]; then
       PACMAN_FLAGS="--asdeps"
     fi
-    get_pkgbuild $CURRENT_PKG &> /dev/null
+    get_pkgbuild $CURRENT_PKG &> /dev/null || CHECK_FOUND=1
     if [ -f ${BUILD_DIR}/${CURRENT_PKG}/PKGBUILD ]; then
       sed -i -e "s/dl.sourceforge.net/downloads.sourceforge.net/" \
           ${BUILD_DIR}/${CURRENT_PKG}/PKGBUILD &> /dev/null
@@ -642,7 +646,7 @@ function build_multiple_packages()
     else
       ERROR_PKGS=${ERROR_PKGS}${CURRENT_PKG}" "
     fi
-    print_checkinstall $CHECK_INSTALL $CHECK_DEPS $CHECK_MAKEPKG
+    print_checkinstall $CHECK_INSTALL $CHECK_DEPS $CHECK_MAKEPKG $CHECK_FOUND
     (( INDEX_PKG++ ))
   done
   if [ "$KEEPDEPS" != "TRUE" ] &&
