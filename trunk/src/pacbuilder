@@ -141,12 +141,26 @@ function check_args()
       --sysupgrade) SYSUPGRADE="TRUE" ;;
       --upgrade) SYSUPGRADE="TRUE" ;;
       --install) INSTALLING="TRUE" ;;
+      --sync) SYNC="TRUE" ;;
       --deps) add_type "deps" ;;
       --explicit) add_type "explicit" ;;
       --world) add_type "world" ;;
       -h) HELP="TRUE" ;;
-      *) INSTALLPKGS=${INSTALLPKGS}${EXTRA_FLAG}" " ;;
-    esac
+      -*) while getopts ":S:bdeuvy" args $1; do
+		  case $args in
+			S) INSTALLING="TRUE" ;;
+			b) BUILDDEPS="TRUE" ;;
+			d) DEPS="TRUE" ;;
+			e) VERBOSE="TRUE"; EDIT_PKGBUILD="TRUE" ;;
+			u) SYSUPGRADE="TRUE" ;;
+			v) VERBOSE="TRUE" ;;
+			y) SYNC="TRUE" ;;
+			h) HELP="TRUE" ;;
+		  esac
+		done ;;
+		*) INSTALLPKGS=${INSTALLPKGS}${EXTRA_FLAG}" " ;;
+	esac
+	shift
   done
 }
 
@@ -679,7 +693,7 @@ function build_multiple_packages()
     fi
     get_pkgbuild $CURRENT_PKG &> /dev/null || CHECK_FOUND=1
     if [ -f ${BUILD_DIR}/${CURRENT_PKG}/PKGBUILD ]; then
-      sed -i -e "s/dl.sourceforge.net/downloads.sourceforge.net/" \
+      sed -i -e "s|dl.sourceforge.net/sourceforge|downloads.sourceforge.net|" \
           ${BUILD_DIR}/${CURRENT_PKG}/PKGBUILD &> /dev/null
       edit_pkgbuild
       get_package_makedepends || CHECK_DEPS=1
@@ -743,7 +757,9 @@ function clean()
   print_clean
   read DELETE_ANSWER
   printf "\n"
-  [ "$DELETE_ANSWER" == "y" ] && delete_log && delete_tmp
+  if [ "$DELETE_ANSWER" == "y" ]; then
+  	delete_log && delete_tmp
+  fi
 }
 
 function delete_log()
@@ -848,9 +864,9 @@ function resume()
       exit
     else
       print_resume_overwrite
-      read RESUME_ANSWER
+      read RESUME_OW_ANSWER
       printf "\n"
-      if [ "$RESUME_ANSWER" != "y" ]; then
+      if [ "$RESUME_OW_ANSWER" != "y" ]; then
         printf "Exiting...\n"
         exit
       fi
