@@ -147,20 +147,20 @@ function check_args()
       --world) add_type "world" ;;
       -h) HELP="TRUE" ;;
       -*) while getopts ":S:bdeuvy" args $1; do
-		  case $args in
-			S) INSTALLING="TRUE" ;;
-			b) BUILDDEPS="TRUE" ;;
-			d) DEPS="TRUE" ;;
-			e) VERBOSE="TRUE"; EDIT_PKGBUILD="TRUE" ;;
-			u) SYSUPGRADE="TRUE" ;;
-			v) VERBOSE="TRUE" ;;
-			y) SYNC="TRUE" ;;
-			h) HELP="TRUE" ;;
-		  esac
-		done ;;
-		*) INSTALLPKGS=${INSTALLPKGS}${EXTRA_FLAG}" " ;;
-	esac
-	shift
+            case $args in
+              S) INSTALLING="TRUE" ;;
+              b) BUILDDEPS="TRUE" ;;
+              d) DEPS="TRUE" ;;
+              e) VERBOSE="TRUE"; EDIT_PKGBUILD="TRUE" ;;
+              u) SYSUPGRADE="TRUE" ;;
+              v) VERBOSE="TRUE" ;;
+              y) SYNC="TRUE" ;;
+              h) HELP="TRUE" ;;
+            esac
+          done ;;
+      *) INSTALLPKGS=${INSTALLPKGS}${EXTRA_FLAG}" " ;;
+  esac
+  shift
   done
 }
 
@@ -758,7 +758,7 @@ function clean()
   read DELETE_ANSWER
   printf "\n"
   if [ "$DELETE_ANSWER" == "y" ]; then
-  	delete_log && delete_tmp
+    delete_log && delete_tmp
   fi
 }
 
