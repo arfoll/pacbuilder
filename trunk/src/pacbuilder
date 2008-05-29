@@ -908,8 +908,7 @@ function sysupgrade_local()
                    -e "s/-any.pkg.tar.gz$//" \
                    -e "s/.pkg.tar.gz//" \
                    -e "s/^.*\///" \
-                   -e "s/-[^-]*-[^-]*$//" \
-             | sort`)
+                   -e "s/-[^-]*-[^-]*$//" \`)
   for PACKAGE in ${PACKAGES[@]}; do
     echo $PACKAGE >> $LOG_FILE
   done
