@@ -70,7 +70,8 @@ function environment()
   SYNCCMD="rsync"
   SYNCARGS="-mrtv --no-motd --delete-after --delete-excluded"
   SYNCSERVER="rsync.archlinux.org"
-  PACMANROOT=`LC_ALL=C pacman --verbose \
+  PACMANBIN="pacman"
+  PACMANROOT=`LC_ALL=C $PACMANBIN --verbose \
               | grep 'DB Path' \
               | awk '{print $4}' \
               | sed "s/\/$//"`
@@ -139,14 +140,13 @@ function check_args()
       --keepdeps) KEEPDEPS="TRUE" ;;
       --noresume) NORESUME="TRUE" ;;
       --sysupgrade) SYSUPGRADE="TRUE" ;;
-      --upgrade) SYSUPGRADE="TRUE" ;;
       --install) INSTALLING="TRUE" ;;
       --sync) SYNC="TRUE" ;;
       --deps) add_type "deps" ;;
       --explicit) add_type "explicit" ;;
       --world) add_type "world" ;;
       -h) HELP="TRUE" ;;
-      -*) while getopts ":S:bdeuvy" args $1; do
+      -*) while getopts ":S:bdeuvy" ARGS $@; do
             case $ARGS in
               S) INSTALLING="TRUE" ;;
               b) BUILDDEPS="TRUE" ;;
@@ -154,13 +154,14 @@ function check_args()
               e) VERBOSE="TRUE"; EDIT_PKGBUILD="TRUE" ;;
               u) SYSUPGRADE="TRUE" ;;
               v) VERBOSE="TRUE" ;;
-              y) SYNC="TRUE" ;;
-              h) HELP="TRUE" ;;
+              w) add_type "world" ;;
+              x) add_type "explicit" ;;
+              y) INSTALLING="FALSE"; SYNC="TRUE" ;;
+              h) INSTALLING="FALSE"; HELP="TRUE" ;;
             esac
           done ;;
       *) INSTALLPKGS=${INSTALLPKGS}${EXTRA_FLAG}" " ;;
-  esac
-  shift
+    esac
   done
 }
 
@@ -248,34 +249,35 @@ function print_help()
   printf "It currently fetches both ABS and AUR\n"
   printf "\n"
   printf "USAGE:\n"
-  printf "  $CMD_BIN --option1 --option2 --option3 ...\n"
+  printf "  $CMD_BIN [options] package\n"
   printf "\n"
   printf "OPTIONS:\n"
   printf "  General:\n"
-  printf "    --help       print this help\n"
-  printf "    --builddeps  build and install the dependencies\n"
-  printf "    --clean      remove previous log\n"
-  printf "    --edit       be verbose and edit PKGBUILD\n"
-  printf "    --gccinfo    print current compilation flags\n"
-  printf "    --keepdeps   keep makedepends after install\n"
-  printf "    --nocolor    don't use any color\n"
-  printf "    --notitle    don't print the title\n"
-  printf "    --verbose    print makepkg output\n"
-  printf "  Target type:\n"
-  printf "    --deps       recompile deps\n"
-  printf "    --explicit   recompile explicitely installed packages\n"
-  printf "    --world      recompile both deps and explicit\n"
+  printf "    --help              print this help\n"
+  printf "    --clean             remove previous log\n"
+  printf "    --edit              be verbose and edit PKGBUILD\n"
+  printf "    --gccinfo           print current compilation flags\n"
+  printf "    --keepdeps          keep makedepends after install\n"
+  printf "    --nocolor           don't use any color\n"
+  printf "    --notitle           don't print the title\n"
+  printf "    --noresume          don't resume\n"
+  printf "  Install:\n"
+  printf "  -S, --install         build specified packages\n"
+  prinft "  (-S) -b, --builddeps  build and install the dependencies\n"
+  printf "  (-S) -d, --deps       recompile deps\n"
+  printf "  (-S) -e, --edit       be verbose and edit PKGBUILD\n"
+  printf "  (-S) -u, --sysupgrade build the updated packages\n"
+  printf "  (-S) -v, --verbose    print makepkg output\n"
+  printf "  (-S) -y, --sync       syncronizing repositories\n"
+  printf "  (-S) -w, --world      recompile both deps and explicit\n"
+  prinft "  (-S) -x, --explicit   recompile explicitely installed packages\n"
   printf "  Target repository:\n"
-  printf "    --core       recompile packages in core\n"
-  printf "    --extra      recompile packages in extra\n"
-  printf "    --testing    recompile packages in testing\n"
-  printf "    --unstable   recompile packages in unstable\n"
-  printf "    --community  recompile packages in community\n"
-  printf "    --aur        recompile packages in aur\n"
-  printf "  Other operations:\n"
-  printf "    --install    build specified packages\n"
-  printf "    --noresume   do not resume\n"
-  printf "    --upgrade    build the updated packages\n"
+  printf "    --core              recompile packages in core\n"
+  printf "    --extra             recompile packages in extra\n"
+  printf "    --testing           recompile packages in testing\n"
+  printf "    --unstable          recompile packages in unstable\n"
+  printf "    --community         recompile packages in community\n"
+  printf "    --aur               recompile packages in aur\n"
 }
 
 function print_gcc_info()
@@ -477,7 +479,7 @@ function get_package_makedepends()
 
 function get_pkgbuild()
 {
-  REPO=`LC_ALL=C pacman -Si ${1} 2> /dev/null \
+  REPO=`LC_ALL=C $PACMANBIN -Si ${1} 2> /dev/null \
         | grep -m1 Repository \
         | awk -F": " '{ print $2 }'`
   case $REPO in
@@ -540,7 +542,7 @@ function is_installed()
 
 function is_installed_cached()
 {
-  if [ `pacman -Q ${1} 2> /dev/null | wc -l` != "0" ]; then
+  if [ `$PACMANBIN -Q ${1} 2> /dev/null | wc -l` != "0" ]; then
     return 0;
   else
     return 1;
@@ -687,7 +689,7 @@ function build_multiple_packages()
     CHECK_UNINSTALL=0
     INDEX_DEP=0
     print_building
-    if [ "`pacman -Qd $CURRENT_PKG 2> /dev/null \
+    if [ "`$PACMANBIN -Qd $CURRENT_PKG 2> /dev/null \
            | awk -F" " '{print $1}'`" != "" ]; then
       PACMAN_FLAGS="--asdeps"
     fi
@@ -710,7 +712,7 @@ function build_multiple_packages()
           get_pkginfo
           print_installing
         fi
-        pacman -U --noconfirm $PACMAN_FLAGS \
+        $PACMANBIN -U --noconfirm $PACMAN_FLAGS \
         $pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz &> /dev/null || \
         CHECK_INSTALL=1
       fi
@@ -729,7 +731,7 @@ function build_multiple_packages()
   if [ "$KEEPDEPS" != "TRUE" ] &&
      [ -n "$MAKEDEPS_INSTALLED" ]; then
     print_uninstalling_deps
-    pacman -Rd --noconfirm \
+    $PACMANBIN -Rd --noconfirm \
     $MAKEDEPS_INSTALLED &> /dev/null || CHECK_UNINSTALL=1
     print_checkuninstall $CHECK_UNINSTALL
   fi
@@ -781,7 +783,7 @@ function match_repo()
   delete_log
   INDEX_PKG=0
   for CURRENT_PKG in $@; do
-    REPO=`LC_ALL=C pacman -Si $CURRENT_PKG 2> /dev/null \
+    REPO=`LC_ALL=C $PACMANBIN -Si $CURRENT_PKG 2> /dev/null \
           | grep -m1 Repository \
           | awk -F": " '{ print $2 }'`
     case $REPO in
@@ -879,6 +881,7 @@ function sysupgrade()
   if [ "$SYSUPGRADE" == "TRUE" ]; then
     delete_log
     print_refreshing_database
+    sync
     sysupgrade_local
     sysupgrade_aur
     TYPES_ENABLED="TRUE"
@@ -892,7 +895,7 @@ function sysupgrade()
 
 function sysupgrade_aur()
 {
-  for PACKAGE in $(pacman -Qm | awk '{print $1}'); do
+  for PACKAGE in $($PACMANBIN -Qm | awk '{print $1}'); do
     AUR_VERSION=`get_json_version $PACKAGE`
     LOCAL_VERSION=`get_local_version $PACKAGE`
     if `is_newer $AUR_VERSION $LOCAL_VERSION`; then
@@ -903,7 +906,7 @@ function sysupgrade_aur()
 
 function sysupgrade_local()
 {
-  PACKAGES=(`pacman --sync --refresh --sysupgrade --print-uris \
+  PACKAGES=(`$PACMANBIN --refresh --sysupgrade --print-uris \
              | grep "^\(ftp:\/\/\|http:\/\/\|file:\/\/\)" \
              | sed -e "s/-i686.pkg.tar.gz$//" \
                    -e "s/-x86_64.pkg.tar.gz$//" \
@@ -919,7 +922,7 @@ function sysupgrade_local()
 
 function type_deps()
 {
-  pacman -Qd | awk -F" " '{print $1}' > $LOG_FILE
+  $PACMANBIN -Qd | awk -F" " '{print $1}' > $LOG_FILE
   if [ "$DONE_DEPS" != "TRUE" ]; then
     print_type "deps packages"
     build_type
@@ -929,7 +932,7 @@ function type_deps()
 
 function type_explicit()
 {
-  pacman -Qe | awk -F" " '{print $1}' > $LOG_FILE
+  $PACMANBIN -Qe | awk -F" " '{print $1}' > $LOG_FILE
   if [ "$DONE_EXPLICIT" != "TRUE" ]; then
     print_type "explicit packages"
     build_type
@@ -939,7 +942,7 @@ function type_explicit()
 
 function type_world()
 {
-  pacman -Q | awk -F" " '{print $1}' > $LOG_FILE
+  $PACMANBIN -Q | awk -F" " '{print $1}' > $LOG_FILE
   if [ "$DONE_WORLD" != "TRUE" ]; then
     print_type "both deps and explicit packages"
     build_type
@@ -947,6 +950,16 @@ function type_world()
   DONE_DEPS="TRUE"
   DONE_EXPLICIT="TRUE"
   DONE_WORLD="TRUE"
+}
+
+function sync()
+{
+  if [ "$SYNC" = "TRUE" ]; then
+    printf "${YELL}==>${DEFA}"
+    printf "${BOLD}"
+    $PACMANBIN -Sy
+    printf "${DEFA}"
+  fi
 }
 
 # END_SECTION - select packages
@@ -965,6 +978,7 @@ function main()
   [ "$CLEAN" == "TRUE" ] && clean
   [ "$GCCINFO" == "TRUE" ] && print_gcc_info
   [ "$NORESUME" != "TRUE" ] && resume
+  [ "$SYNC" == "TRUE" ] && sync
   install
   sysupgrade
   read_type
