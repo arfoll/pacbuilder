@@ -16,7 +16,7 @@ function check_uid()
   E_NONROOT=67
   if [ "$UID" -ne "$ROOT_UID" ]
   then
-    msg "$(gettext "%s requires root permissions to run\n")" "$CMD_NAME"
+    printf "$(gettext "%s requires root permissions to run")\n" "$CMD_NAME"
     exit $E_NONROOT
   fi
 }
@@ -24,7 +24,7 @@ function check_uid()
 function check_required_bin()
 {
   if ! which $1 >/dev/null 2>&1; then
-    msg "$(gettext "You need to install %s!\n")" "$1"
+    printf "$(gettext "You need to install %s!")\n" "$1"
     exit 1
   fi
 }
@@ -173,11 +173,11 @@ msg()
 function print_building()
 {
   printf "${LGRE}==>${DEFA}"
-  printf "${BOLD} Building $CURRENT_PKG"
+  printf "${BOLD} $(gettext "Building %s")" "$CURRENT_PKG"
   if [ -n "$DEPENDENCY_OF" ]; then
     printf "${DEFA} [$DEPENDENCY_OF] ... "
   else
-    printf "${DEFA} [package $INDEX_PKG of $NUM_PKGS] ... "
+    printf "${DEFA} [$(gettext "package %s of %d")] ... " "$INDEX_PKG" "$NUM_PKGS"
   fi
 }
 
@@ -186,7 +186,7 @@ function print_building_dep()
   if [ $INDEX_DEP -gt 1 ]; then
     print_building
   fi
-  printf "${YELL}depends on $1!${DEFA}\n"
+  printf "${YELL}$(gettext "depends on %s!")${DEFA}\n" "$1"
 }
 
 function print_checkinstall()
@@ -196,46 +196,46 @@ function print_checkinstall()
   fi
   if [ $1 -eq 1 ]; then
     if [ $2 -eq 1 ]; then
-      printf "${LRED}missing dependency!${DEFA}\n"
+      printf "${LRED}$(gettext "missing dependency!")${DEFA}\n"
     elif [ $3 -eq 1 ]; then
-      printf "${LRED}makepkg failed!${DEFA}\n"
+      printf "${LRED}$(gettext "makepkg failed!")${DEFA}\n"
     elif [ $4 -eq 1 ]; then
-      printf "${LRED}PKGBUILD not found!${DEFA}\n"
+      printf "${LRED}$(gettext "PKGBUILD not found!")${DEFA}\n"
     else
-      printf "${LRED}error!${DEFA}\n"
+      printf "${LRED}$(gettext "error!")${DEFA}\n"
     fi
   else
-    printf "${LGRE}installed!${DEFA}\n"
+    printf "${LGRE}$(gettext "installed!")${DEFA}\n"
   fi
 }
 
 function print_checkuninstall()
 {
   if [ $1 -eq 1 ]; then
-    printf "${LRED}error!${DEFA}\n"
+    printf "${LRED}$(gettext "error!")${DEFA}\n"
   else
-    printf "${LGRE}uninstalled!${DEFA}\n"
+    printf "${LGRE}$(gettext "uninstalled!")${DEFA}\n"
   fi
 }
 
 function print_clean()
 {
-  printf "${YELL}==> WARNING:${DEFA}"
-  printf "${BOLD} Do you want to delete your log file and build directory?\n"
-  printf "You will not be able to resume it in the future."
-  printf " Are you sure? (y/N): ${DEFA}"
+  printf "${YELL}==> $(gettext "WARNING:")${DEFA}"
+  printf "${BOLD} $(gettext "Do you want to delete your log file and build directory?")\n"
+  printf "$(gettext "You will not be able to resume it in the future.")"
+  printf " $(gettext "Are you sure? (y/N):")${DEFA}"
 }
 
 function print_edit_pkgbuild()
 {
-  printf "${YELL}==> EDIT PKGBUILD:${DEFA}"
-  printf "${BOLD} Do you want to edit this PKGBUILD? (Y/n):${DEFA} "
+  printf "${YELL}==> $(gettext "EDIT PKGBUILD:")${DEFA}"
+  printf "${BOLD} $(gettext "Do you want to edit this PKGBUILD? (Y/n):")${DEFA} "
 }
 
 function print_errorpkgs()
 {
-  printf "${LRED}==> ERROR:${DEFA}"
-  printf "${BOLD} I was unable to install these packages:"
+  printf "${LRED}==> $(gettext "ERROR:")${DEFA}"
+  printf "${BOLD} $(gettext "I was unable to install these packages:")"
   printf "${DEFA} $ERROR_PKGS\n"
 }
 
@@ -287,48 +287,48 @@ function print_gcc_info()
 function print_installing()
 {
   printf "${LGRE}==>${DEFA}"
-  printf "${BOLD} Installing $pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz"
+  printf "${BOLD} $(gettext "Installing %s")" "$pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz"
   if [ -n "$DEPENDENCY_OF" ]; then
     printf "${DEFA} [$DEPENDENCY_OF] ... "
   else
-    printf "${DEFA} [package $INDEX_PKG of $NUM_PKGS] ... "
+    printf "${DEFA} [$(gettext "package %s of %d")] ..." "$INDEX_PKG" "$NUM_PKGS"
   fi
 }
 
 function print_match_repo()
 {
-  printf "Fetching repositories, this may take a long time..."
+  printf "$(gettext "Fetching repositories, this may take a long time...")"
 }
 
 function print_no_log_file()
 {
-  printf "${LRED}==> ERROR:${DEFA}"
-  printf "${BOLD} I was unable to find any package to build...";
-  printf "${LRED} exiting!${DEFA}\n"
+  printf "${LRED}==> $(gettext "ERROR:")${DEFA}"
+  printf "${BOLD} $(gettext "I was unable to find any package to build...")"
+  printf "${LRED} $(gettext "exiting!")${DEFA}\n"
 }
 
 function print_refreshing_database()
 {
-  printf "Refreshing pacman database, please wait..."
+  printf "$(gettext "Refreshing pacman database, please wait...")"
 }
 
 function print_repo()
 {
-  printf "${BOLD}Repo:${DEFA} $1\n"
+  printf "${BOLD}$(gettext "Repo: ")${DEFA} $1\n"
 }
 
 function print_resume_detected()
 {
-  printf "${YELL}==> ATTENTION:${DEFA}"
-  printf "${BOLD} Previous build detected."
-  printf " Do you want to resume? (Y/n):${DEFA} "
+  printf "${YELL}==> $(gettext "ATTENTION:")${DEFA}"
+  printf "${BOLD} $(gettext "Previous build detected.")"
+  printf " $(gettext "Do you want to resume? (Y/n):")${DEFA} "
 }
 
 function print_resume_overwrite()
 {
-  printf "${YELL}==> ATTENTION:${DEFA}"
-  printf "${BOLD} Your previous build will be overwritten."
-  printf " Continue? (y/N):${DEFA} "
+  printf "${YELL}==> $(gettext "ATTENTION:")${DEFA}"
+  printf "${BOLD} $(gettext "Your previous build will be overwritten.")"
+  printf " $(gettext "Continue? (y/N):")${DEFA} "
 }
 
 function print_success()
@@ -353,13 +353,13 @@ function print_title()
 
 function print_type()
 {
-  printf "${BOLD}Type:${DEFA} $1\n"
+  printf "${BOLD}$(gettext "Type:")${DEFA} $1\n"
 }
 
 function print_uninstalling_deps()
 {
   printf "${YELL}==>${DEFA}"
-  printf "${BOLD} Uninstalling dependencies:${DEFA} $MAKEDEPS_INSTALLED... "
+  printf "${BOLD} $(gettext "Uninstalling dependencies:")${DEFA} $MAKEDEPS_INSTALLED... "
 }
 
 # END_SECTION - print to stdout
@@ -813,7 +813,7 @@ function build_type()
     print_success "done"
     printf "\n"
   else
-    print_repo "build from every repository\n"
+    print_repo "$(gettext "build from every repository")\n"
   fi
   build_multiple_packages
 }
@@ -833,11 +833,11 @@ function install()
 function read_type()
 {
   if [ -z "$TYPES_ENABLED" ] && [ -n "$REPO_ENABLED" ]; then
-    printf "No type specified, assuming world...\n\n"
+    printf "$(gettext "No type specified, assuming world...")\n\n"
     ENABLED_TYPES="world"
     sleep 1
   elif [ -n "$TYPES_ENABLED" ] && [ -z "$REPO_ENABLED" ]; then
-    printf "No repository specified, build all...\n\n"
+    printf "$(gettext "No repository specified, build all...")\n\n"
     sleep 1
   fi
   for EXTRA_TYPE in $ENABLED_TYPES; do
@@ -856,7 +856,7 @@ function resume()
     read RESUME_ANSWER
     if [ "$RESUME_ANSWER" != "n" ]; then
       printf "\n"
-      printf "Resuming...\n"
+      printf "$(gettext "Resuming...")\n"
       build_multiple_packages
       exit
     else
@@ -864,7 +864,7 @@ function resume()
       read RESUME_OW_ANSWER
       printf "\n"
       if [ "$RESUME_OW_ANSWER" != "y" ]; then
-        printf "Exiting...\n"
+        printf "$(gettext "Exiting...")\n"
         exit
       fi
     fi
@@ -876,17 +876,17 @@ function sysupgrade()
   if [ "$SYSUPGRADE" == "TRUE" ]; then
     delete_log
     print_refreshing_database
-    #sync
+    sync
     sysupgrade_local
     sysupgrade_aur
     TYPES_ENABLED="TRUE"
     print_success "done"
     printf "\n"
     if [ ! -f $LOG_FILE ]; then
-      printf "System"
-      print_success "Up-to-date!"
+      printf "$(gettext "System")"
+      print_success "$(gettext "Up-to-date!")"
     else
-      print_type "both deps and explicit packages"
+      print_type "$(gettext "both deps and explicit packages")"
       build_type
     fi
     exit
@@ -906,7 +906,7 @@ function sysupgrade_aur()
 
 function sysupgrade_local()
 {
-  PACKAGES=(`$PACMANBIN --sync --refresh --sysupgrade --print-uris \
+  PACKAGES=(`$PACMANBIN --refresh --sysupgrade --print-uris \
              | grep "^\(ftp:\/\/\|http:\/\/\|file:\/\/\)" \
              | sed -e "s/-i686.pkg.tar.gz$//" \
                    -e "s/-x86_64.pkg.tar.gz$//" \
@@ -923,7 +923,7 @@ function type_deps()
 {
   $PACMANBIN -Qd | awk -F" " '{print $1}' > $LOG_FILE
   if [ "$DONE_DEPS" != "TRUE" ]; then
-    print_type "deps packages"
+    print_type "$(gettext "deps packages")"
     build_type
   fi
   DONE_DEPS="TRUE"
@@ -933,7 +933,7 @@ function type_explicit()
 {
   $PACMANBIN -Qe | awk -F" " '{print $1}' > $LOG_FILE
   if [ "$DONE_EXPLICIT" != "TRUE" ]; then
-    print_type "explicit packages"
+    print_type "$(gettext "explicit packages")"
     build_type
   fi
   DONE_EXPLICIT="TRUE"
@@ -943,7 +943,7 @@ function type_world()
 {
   $PACMANBIN -Q | awk -F" " '{print $1}' > $LOG_FILE
   if [ "$DONE_WORLD" != "TRUE" ]; then
-    print_type "both deps and explicit packages"
+    print_type "$(gettext "both deps and explicit packages")"
     build_type
   fi
   DONE_DEPS="TRUE"
@@ -977,7 +977,6 @@ function main()
   [ "$CLEAN" == "TRUE" ] && clean
   [ "$GCCINFO" == "TRUE" ] && print_gcc_info
   [ "$NORESUME" != "TRUE" ] && resume
-#  [ "$SYNC" == "TRUE" ] && sync
   install
   sysupgrade
   read_type
