@@ -146,18 +146,17 @@ function check_args()
       --explicit) add_type "explicit" ;;
       --world) add_type "world" ;;
       -h) HELP="TRUE" ;;
-      -*) while getopts ":S:bdeuvy" ARGS $@; do
+      -*) while getopts ":Sbdeuvy:bdeuvy" ARGS $@ ; do
             case $ARGS in
               S) INSTALLING="TRUE" ;;
               b) BUILDDEPS="TRUE" ;;
-              d) DEPS="TRUE" ;;
               e) VERBOSE="TRUE"; EDIT_PKGBUILD="TRUE" ;;
               u) SYSUPGRADE="TRUE" ;;
               v) VERBOSE="TRUE" ;;
               w) add_type "world" ;;
               x) add_type "explicit" ;;
-              y) INSTALLING="FALSE"; SYNC="TRUE" ;;
-              h) INSTALLING="FALSE"; HELP="TRUE" ;;
+              y) SYNC="TRUE" ;;
+              h) HELP="TRUE" ;;
             esac
           done ;;
       *) INSTALLPKGS=${INSTALLPKGS}${EXTRA_FLAG}" " ;;
@@ -264,7 +263,6 @@ function print_help()
   printf "  Install:\n"
   printf "  -S, --install         build specified packages\n"
   prinft "  (-S) -b, --builddeps  build and install the dependencies\n"
-  printf "  (-S) -d, --deps       recompile deps\n"
   printf "  (-S) -e, --edit       be verbose and edit PKGBUILD\n"
   printf "  (-S) -u, --sysupgrade build the updated packages\n"
   printf "  (-S) -v, --verbose    print makepkg output\n"
