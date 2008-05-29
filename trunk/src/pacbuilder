@@ -977,8 +977,8 @@ function main()
   [ "$CLEAN" == "TRUE" ] && clean
   [ "$GCCINFO" == "TRUE" ] && print_gcc_info
   [ "$NORESUME" != "TRUE" ] && resume
-  install
-  sysupgrade
+  [ "$SYSUPGRADE" == "TRUE" ] && sysupgrade
+  [ "$INSTALLING" == "TRUE" ] && install
   read_type
 }
 
