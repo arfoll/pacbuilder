@@ -2,6 +2,7 @@ High piority:
 
 Medium priority:
 * Must handle versioning checks for the dependencies
+  [ edit: should work better for the upgrade]
 
 Low priority:
 * Save the makedependencies to unistall under /var/log/something, so if you
