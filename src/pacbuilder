@@ -151,10 +151,9 @@ function check_args()
               S) INSTALLING="TRUE" ;;
               b) BUILDDEPS="TRUE" ;;
               e) VERBOSE="TRUE"; EDIT_PKGBUILD="TRUE" ;;
+              k) KEEPDEPS="TRUE" ;;
               u) SYSUPGRADE="TRUE" ;;
               v) VERBOSE="TRUE" ;;
-              w) add_type "world" ;;
-              x) add_type "explicit" ;;
               y) SYNC="TRUE" ;;
               h) HELP="TRUE" ;;
             esac
@@ -256,7 +255,6 @@ function print_help()
   printf "    --clean             remove previous log\n"
   printf "    --edit              be verbose and edit PKGBUILD\n"
   printf "    --gccinfo           print current compilation flags\n"
-  printf "    --keepdeps          keep makedepends after install\n"
   printf "    --nocolor           don't use any color\n"
   printf "    --notitle           don't print the title\n"
   printf "    --noresume          don't resume\n"
@@ -264,11 +262,13 @@ function print_help()
   printf "  -S, --install         build specified packages\n"
   printf "  (-S) -b, --builddeps  build and install the dependencies\n"
   printf "  (-S) -e, --edit       be verbose and edit PKGBUILD\n"
+  printf "  (-S) -k, --keepdeps   keep makedepends after install\n"
   printf "  (-S) -u, --sysupgrade build the updated packages\n"
   printf "  (-S) -v, --verbose    print makepkg output\n"
   printf "  (-S) -y, --sync       syncronizing repositories\n"
-  printf "  (-S) -w, --world      recompile both deps and explicit\n"
-  printf "  (-S) -x, --explicit   recompile explicitely installed packages\n"
+  printf "  Type:\n"
+  printf "    --world             recompile both deps and explicit\n"
+  printf "    --explicit          recompile explicitely installed packages\n"
   printf "  Target repository:\n"
   printf "    --core              recompile packages in core\n"
   printf "    --extra             recompile packages in extra\n"
