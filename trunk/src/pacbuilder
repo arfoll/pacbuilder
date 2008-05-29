@@ -141,7 +141,6 @@ function check_args()
       --noresume) NORESUME="TRUE" ;;
       --sysupgrade) SYSUPGRADE="TRUE" ;;
       --install) INSTALLING="TRUE" ;;
-      --sync) SYNC="TRUE" ;;
       --deps) add_type "deps" ;;
       --explicit) add_type "explicit" ;;
       --world) add_type "world" ;;
@@ -154,7 +153,6 @@ function check_args()
               k) KEEPDEPS="TRUE" ;;
               u) SYSUPGRADE="TRUE" ;;
               v) VERBOSE="TRUE" ;;
-              y) SYNC="TRUE" ;;
               h) HELP="TRUE" ;;
             esac
           done ;;
@@ -265,7 +263,6 @@ function print_help()
   printf "  (-S) -k, --keepdeps   keep makedepends after install\n"
   printf "  (-S) -u, --sysupgrade build the updated packages\n"
   printf "  (-S) -v, --verbose    print makepkg output\n"
-  printf "  (-S) -y, --sync       syncronizing repositories\n"
   printf "  Type:\n"
   printf "    --world             recompile both deps and explicit\n"
   printf "    --explicit          recompile explicitely installed packages\n"
