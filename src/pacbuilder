@@ -876,7 +876,7 @@ function sysupgrade()
   if [ "$SYSUPGRADE" == "TRUE" ]; then
     delete_log
     print_refreshing_database
-    sync
+    #sync
     sysupgrade_local
     sysupgrade_aur
     TYPES_ENABLED="TRUE"
@@ -906,7 +906,7 @@ function sysupgrade_aur()
 
 function sysupgrade_local()
 {
-  PACKAGES=(`$PACMANBIN --refresh --sysupgrade --print-uris \
+  PACKAGES=(`$PACMANBIN --sync --refresh --sysupgrade --print-uris \
              | grep "^\(ftp:\/\/\|http:\/\/\|file:\/\/\)" \
              | sed -e "s/-i686.pkg.tar.gz$//" \
                    -e "s/-x86_64.pkg.tar.gz$//" \
@@ -977,7 +977,7 @@ function main()
   [ "$CLEAN" == "TRUE" ] && clean
   [ "$GCCINFO" == "TRUE" ] && print_gcc_info
   [ "$NORESUME" != "TRUE" ] && resume
-  [ "$SYNC" == "TRUE" ] && sync
+#  [ "$SYNC" == "TRUE" ] && sync
   install
   sysupgrade
   read_type
