@@ -147,7 +147,7 @@ function check_args()
       --world) add_type "world" ;;
       -h) HELP="TRUE" ;;
       -*) while getopts ":S:bdeuvy" args $1; do
-            case $args in
+            case $ARGS in
               S) INSTALLING="TRUE" ;;
               b) BUILDDEPS="TRUE" ;;
               d) DEPS="TRUE" ;;
