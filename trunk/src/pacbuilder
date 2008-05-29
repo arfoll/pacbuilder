@@ -882,8 +882,13 @@ function sysupgrade()
     TYPES_ENABLED="TRUE"
     print_success "done"
     printf "\n"
-    print_type "both deps and explicit packages"
-    build_type
+    if [ ! -f $LOG_FILE ]; then
+      printf "System"
+      print_success "Up-to-date!"
+    else
+      print_type "both deps and explicit packages"
+      build_type
+    fi
     exit
   fi
 }
