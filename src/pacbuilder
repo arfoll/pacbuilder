@@ -66,6 +66,7 @@ function environment()
   [ -z "$CARCH" ] && CARCH="i686"
   [ -z "$TMP_PATH" ] && TMP_PATH=/tmp
   [ -z "$LOG_FILE" ] && LOG_FILE=/var/log/${CMD_BIN}-packages.log
+  [ -z "$PKGDEST" ] && PKGDEST="."
   BUILD_DIR=${TMP_PATH}/${CMD_BIN}/build
   SYNCCMD="rsync"
   SYNCARGS="-mrtv --no-motd --delete-after --delete-excluded"
@@ -708,7 +709,7 @@ function build_multiple_packages()
           print_installing
         fi
         $PACMANBIN -U --noconfirm $PACMAN_FLAGS \
-        $pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz &> /dev/null || \
+        ${PKGDEST}/$pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz &> /dev/null || \
         CHECK_INSTALL=1
       fi
     else
