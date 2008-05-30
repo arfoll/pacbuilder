@@ -132,7 +132,7 @@ function check_args()
       --help) HELP="TRUE" ;;
       --verbose) VERBOSE="TRUE" ;;
       --builddeps) BUILDDEPS="TRUE" ;;
-      --edit) VERBOSE="TRUE"; EDIT_PKGBUILD="TRUE" ;;
+      --edit) VERBOSE="TRUE" ; EDIT_PKGBUILD="TRUE" ;;
       --gccinfo) GCCINFO="TRUE" ;;
       --nocolor) NOCOLOR="TRUE" ;;
       --notitle) NOTITLE="TRUE" ;;
@@ -149,7 +149,7 @@ function check_args()
             case $ARGS in
               S) INSTALLING="TRUE" ;;
               b) BUILDDEPS="TRUE" ;;
-              e) VERBOSE="TRUE"; EDIT_PKGBUILD="TRUE" ;;
+              e) VERBOSE="TRUE" ; EDIT_PKGBUILD="TRUE" ;;
               k) KEEPDEPS="TRUE" ;;
               u) SYSUPGRADE="TRUE" ;;
               v) VERBOSE="TRUE" ;;
@@ -876,7 +876,7 @@ function sysupgrade()
   if [ "$SYSUPGRADE" == "TRUE" ]; then
     delete_log
     print_refreshing_database
-    sync
+    refresh
     sysupgrade_local
     sysupgrade_aur
     TYPES_ENABLED="TRUE"
@@ -884,7 +884,7 @@ function sysupgrade()
     printf "\n"
     if [ ! -f $LOG_FILE ]; then
       printf "$(gettext "System")"
-      print_success "$(gettext "Up-to-date!")"
+      print_success "$(gettext "Up-to-date")"
     else
       print_type "$(gettext "both deps and explicit packages")"
       build_type
@@ -906,7 +906,7 @@ function sysupgrade_aur()
 
 function sysupgrade_local()
 {
-  PACKAGES=(`$PACMANBIN --refresh --sysupgrade --print-uris \
+  PACKAGES=(`$PACMANBIN --sync --sysupgrade --print-uris \
              | grep "^\(ftp:\/\/\|http:\/\/\|file:\/\/\)" \
              | sed -e "s/-i686.pkg.tar.gz$//" \
                    -e "s/-x86_64.pkg.tar.gz$//" \
@@ -951,14 +951,12 @@ function type_world()
   DONE_WORLD="TRUE"
 }
 
-function sync()
+function refresh()
 {
-  if [ "$SYNC" = "TRUE" ]; then
-    printf "${YELL}==>${DEFA}"
-    printf "${BOLD}"
-    $PACMANBIN -Sy
-    printf "${DEFA}"
-  fi
+  printf "${YELL}==>${DEFA}"
+  printf "${BOLD}"
+  $PACMANBIN --sync --refresh
+  printf "${DEFA}"
 }
 
 # END_SECTION - select packages
