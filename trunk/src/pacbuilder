@@ -141,7 +141,7 @@ function check_args()
       --keepdeps) KEEPDEPS="TRUE" ;;
       --noresume) NORESUME="TRUE" ;;
       --sysupgrade) SYSUPGRADE="TRUE" ;;
-      --install) INSTALLING="T/eRUE" ;;
+      --install) INSTALLING="TRUE" ;;
       --deps) add_type "deps" ;;
       --explicit) add_type "explicit" ;;
       --world) add_type "world" ;;
@@ -954,7 +954,7 @@ function type_world()
 
 function refresh()
 {
-  printf "${YELL}==>${DEFA}"
+  printf "\n${YELL}==>${DEFA}"
   printf "${BOLD}"
   $PACMANBIN --sync --refresh
   printf "${DEFA}"
