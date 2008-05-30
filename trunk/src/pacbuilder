@@ -63,7 +63,6 @@ function environment()
   source /etc/makepkg.conf
   source /etc/${CMD_BIN}.conf
 
-  unset PKGDEST SRCDEST
   [ -z "$CARCH" ] && CARCH="i686"
   [ -z "$TMP_PATH" ] && TMP_PATH=/tmp
   [ -z "$LOG_FILE" ] && LOG_FILE=/var/log/${CMD_BIN}-packages.log
@@ -699,13 +698,11 @@ function build_multiple_packages()
       [ $CHECK_DEPS -eq 1 ] && CHECK_INSTALL=1
       if [ $CHECK_DEPS -eq 0 ]; then
         if [ "$VERBOSE" != "TRUE" ]; then
-          PKGDEST="" SRCDEST="" \
           makepkg -Af --asroot --noconfirm $NOCOLOR_FLAG &> /dev/null || \
           CHECK_MAKEPKG=1
           get_pkginfo
         else
           printf "\n"
-          PKGDEST="" SRCDEST="" \
           makepkg -Af --asroot --noconfirm $NOCOLOR_FLAG || CHECK_MAKEPKG=1
           get_pkginfo
           print_installing
