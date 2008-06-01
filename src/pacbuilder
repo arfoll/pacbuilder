@@ -666,6 +666,12 @@ function is_provided()
   return 1
 }
 
+function refresh_database()
+{
+  $PACMANBIN --sync --refresh &> /dev/null
+}
+
+
 # END_SECTION - fetch pacman database
 # BEGIN_SECTION - manage package installation
 
@@ -877,7 +883,7 @@ function sysupgrade()
   if [ "$SYSUPGRADE" == "TRUE" ]; then
     delete_log
     print_refreshing_database
-    refresh
+    refresh_database
     sysupgrade_local
     sysupgrade_aur
     TYPES_ENABLED="TRUE"
@@ -950,14 +956,6 @@ function type_world()
   DONE_DEPS="TRUE"
   DONE_EXPLICIT="TRUE"
   DONE_WORLD="TRUE"
-}
-
-function refresh()
-{
-  printf "\n${YELL}==>${DEFA}"
-  printf "${BOLD}"
-  $PACMANBIN --sync --refresh
-  printf "${DEFA}"
 }
 
 # END_SECTION - select packages
