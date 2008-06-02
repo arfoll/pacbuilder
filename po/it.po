@@ -93,123 +93,123 @@ msgid "I was unable to install these packages:"
 msgstr "Non ho potuto installare questi pacchetti:"
 
 #: pacbuilder.sh:246
-msgid "A tool to massively recompile packages from sources\\n"
-msgstr "Uno strumento per ricompilare i pacchetti completamente dai sorgenti\\n"
+msgid "A tool to massively recompile packages from sources"
+msgstr "Uno strumento per ricompilare i pacchetti completamente dai sorgenti"
 
 #: pacbuilder.sh:247
-msgid "It currently fetches both ABS and AUR\\n"
-msgstr "Attualmente interroga ABS e AUR\\n"
+msgid "It currently fetches both ABS and AUR"
+msgstr "Attualmente interroga ABS e AUR"
 
 #: pacbuilder.sh:249
-msgid "USAGE:\\n"
-msgstr "USO:\\n"
+msgid "USAGE:"
+msgstr "USO:"
 
 #: pacbuilder.sh:250
-msgid "%s [options] package\\n"
-msgstr "%s [opzioni] pacchetto\\n"
+msgid "%s [options] package"
+msgstr "%s [opzioni] pacchetto"
 
 #: pacbuilder.sh:252
-msgid "OPTIONS:\\n"
-msgstr "OPZIONI:\\n"
+msgid "OPTIONS:"
+msgstr "OPZIONI:"
 
 #: pacbuilder.sh:253
-msgid "General:\\n"
-msgstr "Generale:\\n"
+msgid "General:"
+msgstr "Generale:"
 
 #: pacbuilder.sh:254
-msgid "  --help              print this help\\n"
-msgstr "  --help              visualizza questo help\\n"
+msgid "  --help              print this help"
+msgstr "  --help              visualizza questo help"
 
 #: pacbuilder.sh:255
-msgid "  --clean             remove previous log\\n"
+msgid "  --clean             remove previous log"
 msgstr ""
 
 #: pacbuilder.sh:256
-msgid "  --edit              be verbose and edit PKGBUILD\\n"
+msgid "  --edit              be verbose and edit PKGBUILD"
 msgstr ""
 
 #: pacbuilder.sh:257
-msgid "  --gccinfo           print current compilation flags\\n"
+msgid "  --gccinfo           print current compilation flags"
 msgstr ""
 
 #: pacbuilder.sh:258
-msgid "  --nocolor           don't use any color\\n"
+msgid "  --nocolor           don't use any color"
 msgstr ""
 
 #: pacbuilder.sh:259
-msgid "  --notitle           don't print the title\\n"
+msgid "  --notitle           don't print the title"
 msgstr ""
 
 #: pacbuilder.sh:260
-msgid "  --noresume          don't resume\\n"
+msgid "  --noresume          don't resume"
 msgstr ""
 
 #: pacbuilder.sh:261
-msgid "Install:\\n"
+msgid "Install:"
 msgstr ""
 
 #: pacbuilder.sh:262
-msgid "(-S),    --install    build specified packages\\n"
+msgid "(-S),    --install    build specified packages"
 msgstr ""
 
 #: pacbuilder.sh:263
-msgid "(-S) -b, --builddeps  build and install the dependencies\\n"
+msgid "(-S) -b, --builddeps  build and install the dependencies"
 msgstr ""
 
 #: pacbuilder.sh:264
-msgid "(-S) -e, --edit       be verbose and edit PKGBUILD\\n"
+msgid "(-S) -e, --edit       be verbose and edit PKGBUILD"
 msgstr ""
 
 #: pacbuilder.sh:265
-msgid "(-S) -k, --keepdeps   keep makedepends after install\\n"
+msgid "(-S) -k, --keepdeps   keep makedepends after install"
 msgstr ""
 
 #: pacbuilder.sh:266
-msgid "(-S) -u, --sysupgrade build the updated packages\\n"
+msgid "(-S) -u, --sysupgrade build the updated packages"
 msgstr ""
 
 #: pacbuilder.sh:267
-msgid "(-S) -v, --verbose    print makepkg output\\n"
+msgid "(-S) -v, --verbose    print makepkg output"
 msgstr ""
 
 #: pacbuilder.sh:268
-msgid "Type:\\n"
+msgid "Type:"
 msgstr ""
 
 #: pacbuilder.sh:269
-msgid "  --world             recompile both deps and explicit\\n"
+msgid "  --world             recompile both deps and explicit"
 msgstr ""
 
 #: pacbuilder.sh:270
-msgid "  --explicit          recompile explicitely installed packages\\n"
+msgid "  --explicit          recompile explicitely installed packages"
 msgstr ""
 
 #: pacbuilder.sh:271
-msgid "Target repository:\\n"
+msgid "Target repository:"
 msgstr ""
 
 #: pacbuilder.sh:272
-msgid "  --core              recompile packages in core\\n"
+msgid "  --core              recompile packages in core"
 msgstr ""
 
 #: pacbuilder.sh:273
-msgid "  --extra             recompile packages in extra\\n"
+msgid "  --extra             recompile packages in extra"
 msgstr ""
 
 #: pacbuilder.sh:274
-msgid "  --testing           recompile packages in testing\\n"
+msgid "  --testing           recompile packages in testing"
 msgstr ""
 
 #: pacbuilder.sh:275
-msgid "  --unstable          recompile packages in unstable\\n"
+msgid "  --unstable          recompile packages in unstable"
 msgstr ""
 
 #: pacbuilder.sh:276
-msgid "  --community         recompile packages in community\\n"
+msgid "  --community         recompile packages in community"
 msgstr ""
 
 #: pacbuilder.sh:277
-msgid "  --aur               recompile packages in aur\\n"
+msgid "  --aur               recompile packages in aur"
 msgstr ""
 
 #: pacbuilder.sh:292
