@@ -26,71 +26,71 @@ msgstr "Devi installare %s!"
 
 #: pacbuilder.sh:177
 msgid "Building %s"
-msgstr ""
+msgstr "Costruisco %s"
 
 #: pacbuilder.sh:181 pacbuilder.sh:296
 msgid "package %s of %d"
-msgstr ""
+msgstr "pacchetto %s di %d"
 
 #: pacbuilder.sh:190
 msgid "depends on %s!"
-msgstr ""
+msgstr "dipende da %s"
 
 #: pacbuilder.sh:200
 msgid "missing dependency!"
-msgstr ""
+msgstr "dipendenza non trovata!"
 
 #: pacbuilder.sh:202
 msgid "makepkg failed!"
-msgstr ""
+msgstr "makepkg interrotto"
 
 #: pacbuilder.sh:204
 msgid "PKGBUILD not found!"
-msgstr ""
+msgstr "PKGBUILD non trovato!"
 
 #: pacbuilder.sh:206 pacbuilder.sh:216
 msgid "error!"
-msgstr ""
+msgstr "errore!"
 
 #: pacbuilder.sh:209
 msgid "installed!"
-msgstr ""
+msgstr "installato!"
 
 #: pacbuilder.sh:218
 msgid "uninstalled!"
-msgstr ""
+msgstr "disinstallato!"
 
 #: pacbuilder.sh:224
 msgid "WARNING:"
-msgstr ""
+msgstr "ATTENZIONE:"
 
 #: pacbuilder.sh:225
 msgid "Do you want to delete your log file and build directory?"
-msgstr ""
+msgstr "Vuoi cancellare il file di log e la directory di build?"
 
 #: pacbuilder.sh:226
 msgid "You will not be able to resume it in the future."
-msgstr ""
+msgstr "Non potrai riprenderlo in futuro."
 
 #: pacbuilder.sh:227
 msgid "Are you sure? (y/N):"
-msgstr ""
+msgstr "Sei sicuro? (y/N):"
 
 #: pacbuilder.sh:232
 msgid "EDIT PKGBUILD:"
-msgstr ""
+msgstr "MODIFICA PGKBUILD:"
 
 #: pacbuilder.sh:233
 msgid "Do you want to edit this PKGBUILD? (Y/n):"
-msgstr ""
+msgstr "Vuoi modificare questo PKGBUILD? (Y/n):"
 
 #: pacbuilder.sh:238 pacbuilder.sh:307
 msgid "ERROR:"
-msgstr ""
+msgstr "ERRORE:"
 
 #: pacbuilder.sh:239
 msgid "I was unable to install these packages:"
-msgstr ""
+msgstr "Non ho potuto installare questi pacchetti:"
 
 #: pacbuilder.sh:246
 msgid "A tool to massively recompile packages from sources\\n"
@@ -106,19 +106,19 @@ msgstr "USO:\\n"
 
 #: pacbuilder.sh:250
 msgid "%s [options] package\\n"
-msgstr ""
+msgstr "%s [opzioni] pacchetto\\n"
 
 #: pacbuilder.sh:252
 msgid "OPTIONS:\\n"
-msgstr ""
+msgstr "OPZIONI:\\n"
 
 #: pacbuilder.sh:253
 msgid "General:\\n"
-msgstr ""
+msgstr "Generale:\\n"
 
 #: pacbuilder.sh:254
 msgid "  --help              print this help\\n"
-msgstr ""
+msgstr "  --help              visualizza questo help\\n"
 
 #: pacbuilder.sh:255
 msgid "  --clean             remove previous log\\n"
