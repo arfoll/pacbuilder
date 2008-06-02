@@ -1,0 +1,305 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2008-06-02 12:11+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: pacbuilder.sh:19
+msgid "%s requires root permissions to run"
+msgstr "%s richiede privilegi di root per essere eseguito"
+
+#: pacbuilder.sh:27
+msgid "You need to install %s!"
+msgstr "Devi installare %s!"
+
+#: pacbuilder.sh:177
+msgid "Building %s"
+msgstr ""
+
+#: pacbuilder.sh:181 pacbuilder.sh:296
+msgid "package %s of %d"
+msgstr ""
+
+#: pacbuilder.sh:190
+msgid "depends on %s!"
+msgstr ""
+
+#: pacbuilder.sh:200
+msgid "missing dependency!"
+msgstr ""
+
+#: pacbuilder.sh:202
+msgid "makepkg failed!"
+msgstr ""
+
+#: pacbuilder.sh:204
+msgid "PKGBUILD not found!"
+msgstr ""
+
+#: pacbuilder.sh:206 pacbuilder.sh:216
+msgid "error!"
+msgstr ""
+
+#: pacbuilder.sh:209
+msgid "installed!"
+msgstr ""
+
+#: pacbuilder.sh:218
+msgid "uninstalled!"
+msgstr ""
+
+#: pacbuilder.sh:224
+msgid "WARNING:"
+msgstr ""
+
+#: pacbuilder.sh:225
+msgid "Do you want to delete your log file and build directory?"
+msgstr ""
+
+#: pacbuilder.sh:226
+msgid "You will not be able to resume it in the future."
+msgstr ""
+
+#: pacbuilder.sh:227
+msgid "Are you sure? (y/N):"
+msgstr ""
+
+#: pacbuilder.sh:232
+msgid "EDIT PKGBUILD:"
+msgstr ""
+
+#: pacbuilder.sh:233
+msgid "Do you want to edit this PKGBUILD? (Y/n):"
+msgstr ""
+
+#: pacbuilder.sh:238 pacbuilder.sh:307
+msgid "ERROR:"
+msgstr ""
+
+#: pacbuilder.sh:239
+msgid "I was unable to install these packages:"
+msgstr ""
+
+#: pacbuilder.sh:246
+msgid "A tool to massively recompile packages from sources\\n"
+msgstr "Uno strumento per ricompilare i pacchetti completamente dai sorgenti\\n"
+
+#: pacbuilder.sh:247
+msgid "It currently fetches both ABS and AUR\\n"
+msgstr "Attualmente interroga ABS e AUR\\n"
+
+#: pacbuilder.sh:249
+msgid "USAGE:\\n"
+msgstr "USO:\\n"
+
+#: pacbuilder.sh:250
+msgid "%s [options] package\\n"
+msgstr ""
+
+#: pacbuilder.sh:252
+msgid "OPTIONS:\\n"
+msgstr ""
+
+#: pacbuilder.sh:253
+msgid "General:\\n"
+msgstr ""
+
+#: pacbuilder.sh:254
+msgid "  --help              print this help\\n"
+msgstr ""
+
+#: pacbuilder.sh:255
+msgid "  --clean             remove previous log\\n"
+msgstr ""
+
+#: pacbuilder.sh:256
+msgid "  --edit              be verbose and edit PKGBUILD\\n"
+msgstr ""
+
+#: pacbuilder.sh:257
+msgid "  --gccinfo           print current compilation flags\\n"
+msgstr ""
+
+#: pacbuilder.sh:258
+msgid "  --nocolor           don't use any color\\n"
+msgstr ""
+
+#: pacbuilder.sh:259
+msgid "  --notitle           don't print the title\\n"
+msgstr ""
+
+#: pacbuilder.sh:260
+msgid "  --noresume          don't resume\\n"
+msgstr ""
+
+#: pacbuilder.sh:261
+msgid "Install:\\n"
+msgstr ""
+
+#: pacbuilder.sh:262
+msgid "(-S),    --install    build specified packages\\n"
+msgstr ""
+
+#: pacbuilder.sh:263
+msgid "(-S) -b, --builddeps  build and install the dependencies\\n"
+msgstr ""
+
+#: pacbuilder.sh:264
+msgid "(-S) -e, --edit       be verbose and edit PKGBUILD\\n"
+msgstr ""
+
+#: pacbuilder.sh:265
+msgid "(-S) -k, --keepdeps   keep makedepends after install\\n"
+msgstr ""
+
+#: pacbuilder.sh:266
+msgid "(-S) -u, --sysupgrade build the updated packages\\n"
+msgstr ""
+
+#: pacbuilder.sh:267
+msgid "(-S) -v, --verbose    print makepkg output\\n"
+msgstr ""
+
+#: pacbuilder.sh:268
+msgid "Type:\\n"
+msgstr ""
+
+#: pacbuilder.sh:269
+msgid "  --world             recompile both deps and explicit\\n"
+msgstr ""
+
+#: pacbuilder.sh:270
+msgid "  --explicit          recompile explicitely installed packages\\n"
+msgstr ""
+
+#: pacbuilder.sh:271
+msgid "Target repository:\\n"
+msgstr ""
+
+#: pacbuilder.sh:272
+msgid "  --core              recompile packages in core\\n"
+msgstr ""
+
+#: pacbuilder.sh:273
+msgid "  --extra             recompile packages in extra\\n"
+msgstr ""
+
+#: pacbuilder.sh:274
+msgid "  --testing           recompile packages in testing\\n"
+msgstr ""
+
+#: pacbuilder.sh:275
+msgid "  --unstable          recompile packages in unstable\\n"
+msgstr ""
+
+#: pacbuilder.sh:276
+msgid "  --community         recompile packages in community\\n"
+msgstr ""
+
+#: pacbuilder.sh:277
+msgid "  --aur               recompile packages in aur\\n"
+msgstr ""
+
+#: pacbuilder.sh:292
+msgid "Installing %s"
+msgstr ""
+
+#: pacbuilder.sh:302
+msgid "Fetching repositories, this may take a long time..."
+msgstr ""
+
+#: pacbuilder.sh:308
+msgid "I was unable to find any package to build..."
+msgstr ""
+
+#: pacbuilder.sh:309
+msgid "exiting!"
+msgstr ""
+
+#: pacbuilder.sh:314
+msgid "Refreshing pacman database, please wait..."
+msgstr ""
+
+#: pacbuilder.sh:319
+msgid "Repo: "
+msgstr ""
+
+#: pacbuilder.sh:324 pacbuilder.sh:331
+msgid "ATTENTION:"
+msgstr ""
+
+#: pacbuilder.sh:325
+msgid "Previous build detected."
+msgstr ""
+
+#: pacbuilder.sh:326
+msgid "Do you want to resume? (Y/n):"
+msgstr ""
+
+#: pacbuilder.sh:332
+msgid "Your previous build will be overwritten."
+msgstr ""
+
+#: pacbuilder.sh:333
+msgid "Continue? (y/N):"
+msgstr ""
+
+#: pacbuilder.sh:358
+msgid "Type:"
+msgstr ""
+
+#: pacbuilder.sh:364
+msgid "Uninstalling dependencies:"
+msgstr ""
+
+#: pacbuilder.sh:824
+msgid "build from every repository"
+msgstr ""
+
+#: pacbuilder.sh:844
+msgid "No type specified, assuming world..."
+msgstr ""
+
+#: pacbuilder.sh:848
+msgid "No repository specified, build all..."
+msgstr ""
+
+#: pacbuilder.sh:867
+msgid "Resuming..."
+msgstr ""
+
+#: pacbuilder.sh:875
+msgid "Exiting..."
+msgstr ""
+
+#: pacbuilder.sh:894
+msgid "System"
+msgstr ""
+
+#: pacbuilder.sh:895
+msgid "Up-to-date"
+msgstr ""
+
+#: pacbuilder.sh:897 pacbuilder.sh:954
+msgid "both deps and explicit packages"
+msgstr ""
+
+#: pacbuilder.sh:934
+msgid "deps packages"
+msgstr ""
+
+#: pacbuilder.sh:944
+msgid "explicit packages"
+msgstr ""
