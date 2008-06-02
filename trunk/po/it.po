@@ -133,15 +133,15 @@ msgid "  --gccinfo           print current compilation flags"
 msgstr ""
 
 #: pacbuilder.sh:258
-msgid "  --nocolor           don't use any color"
+msgid "  --nocolor           do not use any color"
 msgstr ""
 
 #: pacbuilder.sh:259
-msgid "  --notitle           don't print the title"
+msgid "  --notitle           do not print the title"
 msgstr ""
 
 #: pacbuilder.sh:260
-msgid "  --noresume          don't resume"
+msgid "  --noresume          do not resume"
 msgstr ""
 
 #: pacbuilder.sh:261
