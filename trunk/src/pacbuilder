@@ -111,54 +111,88 @@ function add_type()
   fi
 }
 
+function set_regex()
+{
+  PKG_MATCH="TRUE"
+  PKG_REGEX="$@"
+}
+
 function check_args()
 {
   if [ -z "$1" ]; then
     NOCOLOR="TRUE"
     print_help
-    exit
+    exit 0
   fi
-  for EXTRA_FLAG in $@; do
-    case $EXTRA_FLAG in
-      --core) add_repository "core" ;;
-      --extra) add_repository "extra" ;;
-      --testing) add_repository "testing" ;;
-      --unstable) add_repository "unstable" ;;
-      --community) add_repository "community" ;;
-      --aur) add_repository "aur" ;;
-    esac
-  done
-  for EXTRA_FLAG in $@; do
-    case $EXTRA_FLAG in
-      --help) HELP="TRUE" ;;
-      --verbose) VERBOSE="TRUE" ;;
-      --builddeps) BUILDDEPS="TRUE" ;;
-      --edit) VERBOSE="TRUE" ; EDIT_PKGBUILD="TRUE" ;;
-      --gccinfo) GCCINFO="TRUE" ;;
-      --nocolor) NOCOLOR="TRUE" ;;
-      --notitle) NOTITLE="TRUE" ;;
-      --clean) CLEAN="TRUE" ;;
-      --keepdeps) KEEPDEPS="TRUE" ;;
-      --noresume) NORESUME="TRUE" ;;
-      --sysupgrade) SYSUPGRADE="TRUE" ;;
-      --install) INSTALLING="TRUE" ;;
-      --deps) add_type "deps" ;;
-      --explicit) add_type "explicit" ;;
-      --world) add_type "world" ;;
-      -h) HELP="TRUE" ;;
-      -*) while getopts ":Sbdeuvy:bdeuvy" ARGS $@ ; do
-            case $ARGS in
-              S) INSTALLING="TRUE" ;;
-              b) BUILDDEPS="TRUE" ;;
-              e) VERBOSE="TRUE" ; EDIT_PKGBUILD="TRUE" ;;
-              k) KEEPDEPS="TRUE" ;;
-              u) SYSUPGRADE="TRUE" ;;
-              v) VERBOSE="TRUE" ;;
-              h) HELP="TRUE" ;;
-            esac
-          done ;;
-      *) INSTALLPKGS=${INSTALLPKGS}${EXTRA_FLAG}" " ;;
-    esac
+
+  while [ $# -gt 0 ]; do
+    OPTIND=0
+    for EXTRA_FLAG in $@; do
+      case $EXTRA_FLAG in
+        -*) break ;;
+         *) INSTALLPKGS=${INSTALLPKGS}${EXTRA_FLAG}" " ; shift ;;
+      esac
+    done
+    while getopts ":Sbpadekuvhm:-:" ARGS ; do
+      case $ARGS in
+        S) INSTALLING="TRUE" ;;
+        b) BUILDDEPS="TRUE" ;;
+        p) PRETEND="TRUE" ;;
+        a) CONFIRM="TRUE" ;;
+        d) FULLDEPLIST="TRUE" ;;
+        e) VERBOSE="TRUE" ; EDIT_PKGBUILD="TRUE" ;;
+        k) KEEPDEPS="TRUE" ;;
+        u) SYSUPGRADE="TRUE" ;;
+        v) VERBOSE="TRUE" ;;
+        h) HELP="TRUE" ;;
+        m) set_regex $OPTARG ;;
+        -)
+        case $OPTARG in
+          core) add_repository "core" ;;
+          extra) add_repository "extra" ;;
+          testing) add_repository "testing" ;;
+          unstable) add_repository "unstable" ;;
+          community) add_repository "community" ;;
+          aur) add_repository "aur" ;;
+          repo)
+          shift $(($OPTIND - 1))
+          add_repository "$1"
+          shift
+          OPTIND=1
+          ;;
+          
+          help) HELP="TRUE" ;;
+          verbose) VERBOSE="TRUE" ;;
+          pretend) PRETEND="TRUE" ;;
+          confirm) CONFIRM="TRUE" ;;
+          builddeps) BUILDDEPS="TRUE" ;;
+          deplist) FULLDEPLIST="TRUE" ;;
+          edit) VERBOSE="TRUE" ; EDIT_PKGBUILD="TRUE" ;;
+          gccinfo) GCCINFO="TRUE" ;;
+          nocolor) NOCOLOR="TRUE" ;;
+          notitle) NOTITLE="TRUE" ;;
+          clean) CLEAN="TRUE" ;;
+          keepdeps) KEEPDEPS="TRUE" ;;
+          noresume) NORESUME="TRUE" ;;
+          sysupgrade) SYSUPGRADE="TRUE" ;;
+          install) INSTALLING="TRUE" ;;
+          deps) add_type "deps" ;;
+          explicit) add_type "explicit" ;;
+          world) add_type "world" ;;
+          match)
+          shift $(($OPTIND - 1))
+          set_regex $1
+          shift
+          OPTIND=1
+          ;;
+          *) NOCOLOR="TRUE"; print_help; exit 0 ;;
+        esac
+        ;;
+        ?) NOCOLOR="TRUE"; print_help; exit 0 ;;
+        *) echo "and $OPTARG" ;;
+      esac
+    done
+    shift $(($OPTIND - 1))
   done
 }
 
@@ -198,6 +232,9 @@ function print_checkinstall()
   if [ $1 -eq 1 ]; then
     if [ $2 -eq 1 ]; then
       printf "${LRED}$(gettext "missing dependency!")${DEFA}\n"
+    elif [ $2 -eq 2 ]; then
+      printf "${LRED}$(gettext "missing make-dependency!")${DEFA}\n"
+      printf "$(gettext "The following packages are required for compilation"):\n    ${MAKEDEPS_MISSING}\n"
     elif [ $3 -eq 1 ]; then
       printf "${LRED}$(gettext "makepkg failed!")${DEFA}\n"
     elif [ $4 -eq 1 ]; then
@@ -250,30 +287,36 @@ function print_help()
   printf "\n"
   printf "$(gettext "OPTIONS:")\n"
   printf "  $(gettext "General:")\n"
-  printf "  $(gettext "  --help              print this help")\n"
-  printf "  $(gettext "  --clean             remove previous log")\n"
-  printf "  $(gettext "  --edit              be verbose and edit PKGBUILD")\n"
-  printf "  $(gettext "  --gccinfo           print current compilation flags")\n"
-  printf "  $(gettext "  --nocolor           do not use any color")\n"
-  printf "  $(gettext "  --notitle           do not print the title")\n"
-  printf "  $(gettext "  --noresume          do not resume")\n"
+  printf "  $(gettext "  --help                print this help")\n"
+  printf "  $(gettext "  --clean               remove previous log")\n"
+  printf "  $(gettext "  --edit                be verbose and edit PKGBUILD")\n"
+  printf "  $(gettext "  --gccinfo             print current compilation flags")\n"
+  printf "  $(gettext "  --nocolor             do not use any color")\n"
+  printf "  $(gettext "  --notitle             do not print the title")\n"
+  printf "  $(gettext "  --noresume            do not resume")\n"
   printf "  $(gettext "Install:")\n"
-  printf "  $(gettext "(-S),    --install    build specified packages")\n"
-  printf "  $(gettext "(-S) -b, --builddeps  build and install the dependencies")\n"
-  printf "  $(gettext "(-S) -e, --edit       be verbose and edit PKGBUILD")\n"
-  printf "  $(gettext "(-S) -k, --keepdeps   keep makedepends after install")\n"
-  printf "  $(gettext "(-S) -u, --sysupgrade build the updated packages")\n"
-  printf "  $(gettext "(-S) -v, --verbose    print makepkg output")\n"
+  printf "  $(gettext "(-S),    --install      build specified packages")\n"
+  printf "  $(gettext "(-S) -b, --builddeps    build and install the dependencies")\n"
+  printf "  $(gettext "(-S) -e, --edit         be verbose and edit PKGBUILD")\n"
+  printf "  $(gettext "(-S) -k, --keepdeps     keep makedepends after install")\n"
+  printf "  $(gettext "(-S) -u, --sysupgrade   build the updated packages")\n"
+  printf "  $(gettext "(-S) -v, --verbose      print makepkg output")\n"
+  printf "  $(gettext "Additional parameters:")\n"
+  printf "  $(gettext "  -p, --pretend         only print the final list of packages to be installed")\n"
+  printf "  $(gettext "  -a, --confirm         ask again after printing the list of packages to be installed")\n"
+  printf "  $(gettext "  -m, --match <regex>   only install packages matching <regex>")\n"
+  printf "  $(gettext "  -d, --deplist         recursively list all dependencies first")\n"
+#  printf "  $(gettext "  -s, --search <regex>  search for packages matching <regex>")\n"
   printf "  $(gettext "Type:")\n"
-  printf "  $(gettext "  --world             recompile both deps and explicit")\n"
-  printf "  $(gettext "  --explicit          recompile explicitely installed packages")\n"
+  printf "  $(gettext "  --world               recompile both deps and explicit")\n"
+  printf "  $(gettext "  --explicit            recompile explicitely installed packages")\n"
   printf "  $(gettext "Target repository:")\n"
-  printf "  $(gettext "  --core              recompile packages in core")\n"
-  printf "  $(gettext "  --extra             recompile packages in extra")\n"
-  printf "  $(gettext "  --testing           recompile packages in testing")\n"
-  printf "  $(gettext "  --unstable          recompile packages in unstable")\n"
-  printf "  $(gettext "  --community         recompile packages in community")\n"
-  printf "  $(gettext "  --aur               recompile packages in aur")\n"
+  printf "  $(gettext "  --core                recompile packages in core")\n"
+  printf "  $(gettext "  --extra               recompile packages in extra")\n"
+  printf "  $(gettext "  --testing             recompile packages in testing")\n"
+  printf "  $(gettext "  --unstable            recompile packages in unstable")\n"
+  printf "  $(gettext "  --community           recompile packages in community")\n"
+  printf "  $(gettext "  --aur                 recompile packages in aur")\n"
 }
 
 function print_gcc_info()
@@ -456,7 +499,11 @@ function get_package_makedepends()
     if [ "$MAKEDEP" != "$pkgname" ] &&
        ! is_installed $MAKEDEP &&
        ! is_provided $MAKEDEP; then
-      [ "$BUILDDEPS" != "TRUE" ] && return 1
+      if [ "$BUILDDEPS" != "TRUE" ]; then
+        MAKEDEPS_MISSING=${MAKEDEPS_MISSING}${MAKEDEP}" "
+        CHECK_MAKEDEP=1
+        continue
+      fi
       (( INDEX_DEP++ ))
       print_building_dep $MAKEDEP
       LOG_FILE=${TMP_PATH}/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
@@ -470,7 +517,7 @@ function get_package_makedepends()
       MAKEDEPS_INSTALLED=${MAKEDEPS_INSTALLED}${MAKEDEP}" "
     fi
   done
-  return 0
+  return $CHECK_MAKEDEP
 }
 
 function get_pkgbuild()
@@ -499,6 +546,20 @@ function get_pkgbuild()
     rm -rf ./${1}.tar.gz
   fi
   cd ${BUILD_DIR}/${1}
+  return 0
+}
+
+function get_last_pkgbuild()
+{
+  if [ "$FULLDEPLIST" = "TRUE" ]; then
+      if [ -f ${BUILD_DIR}/${1}/PKGBUILD ]; then
+        cd ${BUILD_DIR}/${1}
+      else
+        get_pkgbuild $1 || return 1
+      fi
+  else
+      get_pkgbuild $1 || return 1
+  fi
   return 0
 }
 
@@ -675,14 +736,128 @@ function refresh_database()
 # END_SECTION - fetch pacman database
 # BEGIN_SECTION - manage package installation
 
+function print_checking_deps()
+{
+  printf "${YELL}$(gettext "Checking dependencies...")${DEFA}\n"
+}
+
+DEPLIST_DEPS=()
+
+function is_in_deplist()
+{
+  local DEP
+  for DEP in ${DEPLIST_DEPS[@]}; do
+    [ "$DEP" = "$1" ] && return 0
+  done
+  return 1
+}
+
+function list_package_depends()
+{
+  local -a DEPS
+  local -a FINAL_DEPS
+  local DEP
+  unset depends pkgname
+  CHECK_DEP=0
+
+  source ./PKGBUILD
+  for DEP in $(echo "${depends[@]}" | tr -d '\\'); do
+    DEPS[${#DEPS[@]}]=$(echo $DEP | sed 's/=.*//' \
+                                  | sed 's/>.*//' \
+                                  | sed 's/<.*//')
+  done
+  [ ${#DEPS[@]} -eq 0 ] && return 0
+
+  for DEP in ${DEPS[@]}; do
+    if [ "$DEP" != "$pkgname" ] &&
+       ! is_installed $DEP &&
+       ! is_provided $DEP &&
+       ! is_in_deplist $DEP; then
+      [ "$BUILDDEPS" != "TRUE" ] && return 1
+      FINAL_DEPS[${#FINAL_DEPS[@]}]=$DEP
+      DEPLIST_DEPS[${#DEPLIST_DEPS[@]}]=$DEP
+    fi
+  done
+
+  [ ${#FINAL_DEPS[@]} -eq 0 ] && return 0
+  printf "\r$1 ${YELL}$(gettext "depends on"):${DEFA} "
+  echo ${FINAL_DEPS[@]}
+  for DEP in ${FINAL_DEPS[@]}; do
+      CHECK_FOUND=0
+      CHECK_DEPS=0
+      get_pkgbuild $DEP &> /dev/null || CHECK_FOUND=1
+      if [ -f ${BUILD_DIR}/${DEP}/PKGBUILD ]; then
+	  sed -i -e "s|dl.sourceforge.net/sourceforge|downloads.sourceforge.net|" \
+              ${BUILD_DIR}/${DEP}/PKGBUILD &> /dev/null
+	  list_package_depends $DEP || CHECK_DEPS=1
+      else
+	  printf "\r${LRED}$(gettext "Missing PKGBUILD for"):${DEFA} ${DEP}\n"
+      fi
+  done
+}
+
+function list_all_package_depends()
+{
+  local CURRENT_PKG
+  [ "$NOTITLE" = "TRUE" ] || print_checking_deps
+  for CURRENT_PKG in $PACKAGES; do
+      CHECK_FOUND=0
+      CHECK_DEPS=0
+      printf "\r                            \r${CURRENT_PKG}"
+      get_pkgbuild $CURRENT_PKG &> /dev/null || CHECK_FOUND=1
+      if [ -f ${BUILD_DIR}/${CURRENT_PKG}/PKGBUILD ]; then
+	  sed -i -e "s|dl.sourceforge.net/sourceforge|downloads.sourceforge.net|" \
+              ${BUILD_DIR}/${CURRENT_PKG}/PKGBUILD &> /dev/null
+	  list_package_depends $CURRENT_PKG || CHECK_DEPS=1
+      fi
+  done
+  printf "\r                                   \r"
+}
+
 function build_multiple_packages()
 {
+  #local PACKAGES CPKG
+  local CPKG
   check_log_file
   sed -i '/^$/d' $LOG_FILE
-  PACKAGES=`cat $LOG_FILE`
-  NUM_PKGS=`cat $LOG_FILE | wc -l`
   ERROR_PKGS=""
   INDEX_PKG=1
+
+  if [ "$PKG_MATCH" = "TRUE" ]; then
+      PACKAGES=`grep -P "$PKG_REGEX" $LOG_FILE`
+      NUM_PKGS=`grep -P "$PKG_REGEX" $LOG_FILE | wc -l`
+  else
+      PACKAGES=`cat $LOG_FILE`
+      NUM_PKGS=`cat $LOG_FILE | wc -l`
+  fi
+
+  if [ "$PRETEND" = "TRUE" ]; then
+      printf "${YELL}$(gettext "The following packages would be built:")${DEFA}\n"
+      for CPKG in $PACKAGES; do
+	  msg "$CPKG"
+      done
+      return 0
+  elif [ "$NOTITLE" != "TRUE" ]; then
+      printf "${YELL}$(gettext "The following packages will be built:")${DEFA}\n"
+      for CPKG in $PACKAGES; do
+	  msg "$CPKG"
+      done
+  fi
+
+  [ "$FULLDEPLIST" = "TRUE" ] && list_all_package_depends
+
+  if [ "$CONFIRM" = "TRUE" ]; then
+      printf "$(gettext "Do you want to continue? (Y/n):")${DEFA} "
+      read CONFIRM_ANSWER
+      if [ "$CONFIRM_ANSWER" != "Y" ]; then
+	  return 0
+      fi
+  fi
+
+  # TODO: order packages in a way that pkgs which should be installed explicitly
+  #       but are pulled in as deps TOO are not installed twice, and are installed
+  #       before they're pulled in with --asdeps!
+
   for CURRENT_PKG in $PACKAGES; do
     CHECK_DEPS=0
     CHECK_FOUND=0
@@ -695,14 +870,15 @@ function build_multiple_packages()
            | awk -F" " '{print $1}'`" != "" ]; then
       PACMAN_FLAGS="--asdeps"
     fi
-    get_pkgbuild $CURRENT_PKG &> /dev/null || CHECK_FOUND=1
+
+    get_last_pkgbuild $CURRENT_PKG &> /dev/null || CHECK_FOUND=1
+
     if [ -f ${BUILD_DIR}/${CURRENT_PKG}/PKGBUILD ]; then
-      sed -i -e "s|dl.sourceforge.net/sourceforge|downloads.sourceforge.net|" \
-          ${BUILD_DIR}/${CURRENT_PKG}/PKGBUILD &> /dev/null
+      cd ${BUILD_DIR}/${CURRENT_PKG}
       edit_pkgbuild
-      get_package_makedepends || CHECK_DEPS=1
+      get_package_makedepends || CHECK_DEPS=2
       get_package_depends || CHECK_DEPS=1
-      [ $CHECK_DEPS -eq 1 ] && CHECK_INSTALL=1
+      [ $CHECK_DEPS -ne 0 ] && CHECK_INSTALL=1
       if [ $CHECK_DEPS -eq 0 ]; then
         if [ "$VERBOSE" != "TRUE" ]; then
           makepkg -Af --asroot --noconfirm $NOCOLOR_FLAG &> /dev/null || \
@@ -752,7 +928,7 @@ function check_log_file()
 {
   if [ ! -f $LOG_FILE ]; then
     print_no_log_file
-    exit
+    exit 0
   fi
 }
 
@@ -833,7 +1009,7 @@ function install()
       echo $EXTRA_FLAG >> $LOG_FILE
     done
     build_multiple_packages
-    exit
+    exit 0
   fi
 }
 
@@ -865,14 +1041,14 @@ function resume()
       printf "\n"
       printf "$(gettext "Resuming...")\n"
       build_multiple_packages
-      exit
+      exit 0
     else
       print_resume_overwrite
       read RESUME_OW_ANSWER
       printf "\n"
       if [ "$RESUME_OW_ANSWER" != "y" ]; then
         printf "$(gettext "Exiting...")\n"
-        exit
+        exit 0
       fi
     fi
   fi
@@ -896,7 +1072,7 @@ function sysupgrade()
       print_type "$(gettext "both deps and explicit packages")"
       build_type
     fi
-    exit
+    exit 0
   fi
 }
 
