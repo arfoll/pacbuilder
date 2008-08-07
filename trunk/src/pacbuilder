@@ -480,7 +480,7 @@ function get_package_depends()
       LOG_FILE=${TMP_PATH}/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
       NOCOLOR=$NOCOLOR VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
       GCCINFO="" \
-      DEPENDENCY_OF="dependency of $pkgname" \
+      DEPENDENCY_OF="dependency of $pkgname" PACMAN_FLAGS="--asdeps" \
       $CMD_BIN --notitle --noresume --builddeps --install $DEP || CHECK_DEP=1
       rm -rf LOG_FILE=${TMP_PATH}/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
       [ $CHECK_DEP -eq 1 ] && return 1
@@ -512,9 +512,9 @@ function get_package_makedepends()
       (( INDEX_DEP++ ))
       print_building_dep $MAKEDEP
       LOG_FILE=${TMP_PATH}/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
-      VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
+      PACMAN_FLAGS="--asdeps" VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
       GCCINFO="" \
-      DEPENDENCY_OF="makedependency of $pkgname" \
+      DEPENDENCY_OF="makedependency of $pkgname" PACMAN_FLAGS="--asdeps" \
       $CMD_BIN --notitle --noresume --builddeps --install $MAKEDEP || \
       CHECK_MAKEDEP=1
       rm -rf LOG_FILE=${TMP_PATH}/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
@@ -867,7 +867,8 @@ function build_multiple_packages()
     INDEX_DEP=0
     print_building
     if [ "`$PACMANBIN -Qd $CURRENT_PKG 2> /dev/null \
-           | awk -F" " '{print $1}'`" != "" ]; then
+      | awk -F" " '{print $1}'`" != "" ]; then
+      PACMAN_FLAGS="--asdeps" 
     fi
 
     get_last_pkgbuild $CURRENT_PKG &> /dev/null || CHECK_FOUND=1
@@ -889,7 +890,7 @@ function build_multiple_packages()
           get_pkginfo
           print_installing
         fi
-        $PACMANBIN -U --asexplicit --noconfirm \
+        $PACMANBIN -U --asexplicit --noconfirm $PACMAN_FLAGS \
         ${PKGDEST}/$pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz &> /dev/null || \
         CHECK_INSTALL=1
       fi
