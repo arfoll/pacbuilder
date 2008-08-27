@@ -76,7 +76,7 @@ function environment()
   SYNCCMD="rsync"
   SYNCARGS="-mrtv --no-motd --delete-after --delete-excluded"
   SYNCSERVER="rsync.archlinux.org"
-  PACMANBIN="pacman"
+  PACMANBIN="/usr/bin/pacman"
   PACMANROOT=`LC_ALL=C $PACMANBIN --verbose \
               | grep 'DB Path' \
               | awk '{print $4}' \
@@ -156,7 +156,6 @@ function check_args()
           core) add_repository "core" ;;
           extra) add_repository "extra" ;;
           testing) add_repository "testing" ;;
-          unstable) add_repository "unstable" ;;
           community) add_repository "community" ;;
           aur) add_repository "aur" ;;
           repo)
@@ -184,6 +183,7 @@ function check_args()
           deps) add_type "deps" ;;
           explicit) add_type "explicit" ;;
           world) add_type "world" ;;
+          devel) add_type "devel" ;;
           match)
           shift $(($OPTIND - 1))
           set_regex $1
@@ -315,11 +315,11 @@ function print_help()
   printf "  $(gettext "Type:")\n"
   printf "  $(gettext "  --world               recompile both deps and explicit")\n"
   printf "  $(gettext "  --explicit            recompile explicitely installed packages")\n"
+  printf "  $(gettext "  --devel               recompile only installated devel packages")\n"
   printf "  $(gettext "Target repository:")\n"
   printf "  $(gettext "  --core                recompile packages in core")\n"
   printf "  $(gettext "  --extra               recompile packages in extra")\n"
   printf "  $(gettext "  --testing             recompile packages in testing")\n"
-  printf "  $(gettext "  --unstable            recompile packages in unstable")\n"
   printf "  $(gettext "  --community           recompile packages in community")\n"
   printf "  $(gettext "  --aur                 recompile packages in aur")\n"
 }
@@ -534,7 +534,6 @@ function get_pkgbuild()
     core) ;;
     extra) ;;
     testing) ;;
-    unstable) ;;
     community) REPO=${REPO}/`get_community_category ${1}` ;;
     *) REPO="aur" ;;
   esac
@@ -968,7 +967,6 @@ function match_repo()
       core) ;;
       extra) ;;
       testing) ;;
-      unstable) ;;
       community) ;;
       *) REPO="aur" ;;
     esac
@@ -1028,6 +1026,7 @@ function read_type()
       deps) type_deps ;;
       explicit) type_explicit ;;
       world) type_world ;;
+      devel) type_devel ;;
     esac
   done
 }
@@ -1104,7 +1103,7 @@ function sysupgrade_local()
 
 function type_deps()
 {
-  $PACMANBIN -Qd | awk -F" " '{print $1}' > $LOG_FILE
+  $PACMANBIN -Qqd > $LOG_FILE
   if [ "$DONE_DEPS" != "TRUE" ]; then
     print_type "$(gettext "deps packages")"
     build_type
@@ -1114,7 +1113,7 @@ function type_deps()
 
 function type_explicit()
 {
-  $PACMANBIN -Qe | awk -F" " '{print $1}' > $LOG_FILE
+  $PACMANBIN -Qqe > $LOG_FILE
   if [ "$DONE_EXPLICIT" != "TRUE" ]; then
     print_type "$(gettext "explicit packages")"
     build_type
@@ -1124,9 +1123,21 @@ function type_explicit()
 
 function type_world()
 {
-  $PACMANBIN -Q | awk -F" " '{print $1}' > $LOG_FILE
+  $PACMANBIN -Qq > $LOG_FILE
   if [ "$DONE_WORLD" != "TRUE" ]; then
     print_type "$(gettext "both deps and explicit packages")"
+    build_type
+  fi
+  DONE_DEPS="TRUE"
+  DONE_EXPLICIT="TRUE"
+  DONE_WORLD="TRUE"
+}
+
+function type_devel()
+{
+  $PACMANBIN -Qq | grep "\-\(svn\|cvs\|hg\|git\|bzr\|darcs\)" > $LOG_FILE
+  if [ "$DONE_DEVEL" != "TRUE" ]; then
+    print_type "$(gettext "recompile only installated devel packages")"
     build_type
   fi
   DONE_DEPS="TRUE"
