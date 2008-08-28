@@ -124,6 +124,23 @@ function set_regex()
 
 function check_args()
 {
+  INSTALLING=""
+  BUILDDEPS=""
+  PRETEND=""
+  CONFIRM=""
+  FULLDEPLIST=""
+  VERBOSE=""
+  EDIT=""
+  FORCE=""	
+  KEEPDEPS=""
+  SYSUPGRADE=""
+  HELP=""
+  NOCOLOR=""
+  NOTITLE=""
+  NORESUME=""
+  CLEAN=""
+  GCCINFO=""
+
   if [ -z "$1" ]; then
     NOCOLOR="TRUE"
     print_help
@@ -138,7 +155,7 @@ function check_args()
          *) INSTALLPKGS=${INSTALLPKGS}${EXTRA_FLAG}" " ; shift ;;
       esac
     done
-    while getopts ":Sbpadekuvhm:-:" ARGS ; do
+    while getopts ":Sbpadefkuvhm:-:" ARGS ; do
       case $ARGS in
         S) INSTALLING="TRUE" ;;
         b) BUILDDEPS="TRUE" ;;
@@ -146,6 +163,7 @@ function check_args()
         a) CONFIRM="TRUE" ;;
         d) FULLDEPLIST="TRUE" ;;
         e) VERBOSE="TRUE" ; EDIT_PKGBUILD="TRUE" ;;
+        f) FORCE="TRUE" ;;
         k) KEEPDEPS="TRUE" ;;
         u) SYSUPGRADE="TRUE" ;;
         v) VERBOSE="TRUE" ;;
@@ -176,6 +194,7 @@ function check_args()
           nocolor) NOCOLOR="TRUE" ;;
           notitle) NOTITLE="TRUE" ;;
           clean) CLEAN="TRUE" ;;
+          force) FORCE="TRUE" ;;
           keepdeps) KEEPDEPS="TRUE" ;;
           noresume) NORESUME="TRUE" ;;
           sysupgrade) SYSUPGRADE="TRUE" ;;
@@ -303,6 +322,7 @@ function print_help()
   printf "  $(gettext "(-S),    --install      build specified packages")\n"
   printf "  $(gettext "(-S) -b, --builddeps    build and install the dependencies")\n"
   printf "  $(gettext "(-S) -e, --edit         be verbose and edit PKGBUILD")\n"
+  printf "  $(gettext "(-S) -f, --force        force install, overwrite conflicting files")\n"
   printf "  $(gettext "(-S) -k, --keepdeps     keep makedepends after install")\n"
   printf "  $(gettext "(-S) -u, --sysupgrade   build the updated packages")\n"
   printf "  $(gettext "(-S) -v, --verbose      print makepkg output")\n"
@@ -865,9 +885,10 @@ function build_multiple_packages()
     CHECK_UNINSTALL=0
     INDEX_DEP=0
     print_building
-    if [ "`$PACMANBIN -Qd $CURRENT_PKG 2> /dev/null \
-      | awk -F" " '{print $1}'`" != "" ]; then
-      PACMAN_FLAGS="--asdeps" 
+    if [ "`$PACMANBIN -Qqd $CURRENT_PKG 2> /dev/null`" != "" ]; then
+      PACMAN_FLAGS="--asdeps"
+    else
+      PACMAN_FLAGS="--asexplicit"
     fi
 
     get_last_pkgbuild $CURRENT_PKG &> /dev/null || CHECK_FOUND=1
@@ -889,9 +910,15 @@ function build_multiple_packages()
           get_pkginfo
           print_installing
         fi
-        $PACMANBIN -U --asexplicit --noconfirm $PACMAN_FLAGS \
-        ${PKGDEST}/$pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz &> /dev/null || \
-        CHECK_INSTALL=1
+        if [ "$FORCE" != "TRUE" ]; then
+          $PACMANBIN -U --noconfirm $PACMAN_FLAGS \
+            ${PKGDEST}/$pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz &> /dev/null || \
+          CHECK_INSTALL=1
+        else
+          $PACMANBIN -Uf --noconfirm $PACMAN_FLAGS \
+            ${PKGDEST}/$pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz &> /dev/null || \
+          CHECK_INSTALL=1
+        fi
       fi
     else
       CHECK_INSTALL=1
@@ -1077,7 +1104,7 @@ function sysupgrade()
 
 function sysupgrade_aur()
 {
-  for PACKAGE in $($PACMANBIN -Qm | awk '{print $1}'); do
+  for PACKAGE in $($PACMANBIN -Qqm); do
     AUR_VERSION=`get_json_version $PACKAGE`
     LOCAL_VERSION=`get_local_version $PACKAGE`
     if `is_newer $AUR_VERSION $LOCAL_VERSION`; then
