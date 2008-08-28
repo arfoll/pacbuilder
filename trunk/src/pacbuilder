@@ -124,23 +124,6 @@ function set_regex()
 
 function check_args()
 {
-  INSTALLING=""
-  BUILDDEPS=""
-  PRETEND=""
-  CONFIRM=""
-  FULLDEPLIST=""
-  VERBOSE=""
-  EDIT=""
-  FORCE=""	
-  KEEPDEPS=""
-  SYSUPGRADE=""
-  HELP=""
-  NOCOLOR=""
-  NOTITLE=""
-  NORESUME=""
-  CLEAN=""
-  GCCINFO=""
-
   if [ -z "$1" ]; then
     NOCOLOR="TRUE"
     print_help
@@ -558,7 +541,8 @@ function get_pkgbuild()
     *) REPO="aur" ;;
   esac
   if [ "$REPO" != "aur" ]; then
-    $SYNCCMD $SYNCARGS ${SYNCSERVER}::abs/${CARCH}/${REPO}/${1} ${BUILD_DIR}
+    abs; cp -rf /var/abs/${REPO}/${1} ${BUILD_DIR}
+    #$SYNCCMD $SYNCARGS ${SYNCSERVER}::abs/${CARCH}/${REPO}/${1} ${BUILD_DIR}
     if [ ! -f ${BUILD_DIR}/${1}/PKGBUILD ]; then
       REPO="aur"
     fi
