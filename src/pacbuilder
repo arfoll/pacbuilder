@@ -138,12 +138,12 @@ function check_args()
          *) INSTALLPKGS=${INSTALLPKGS}${EXTRA_FLAG}" " ; shift ;;
       esac
     done
-    while getopts ":Sbpadefkuvhm:-:" ARGS ; do
+    while getopts ":Sbpndefkuvhm:-:" ARGS ; do
       case $ARGS in
         S) INSTALLING="TRUE" ;;
         b) BUILDDEPS="TRUE" ;;
         p) PRETEND="TRUE" ;;
-        a) CONFIRM="TRUE" ;;
+        n) NOCONFIRM="TRUE" ;;
         d) FULLDEPLIST="TRUE" ;;
         e) VERBOSE="TRUE" ; EDIT_PKGBUILD="TRUE" ;;
         f) FORCE="TRUE" ;;
@@ -169,7 +169,7 @@ function check_args()
           help) HELP="TRUE" ;;
           verbose) VERBOSE="TRUE" ;;
           pretend) PRETEND="TRUE" ;;
-          confirm) CONFIRM="TRUE" ;;
+          noconfirm) NOCONFIRM="TRUE" ;;
           builddeps) BUILDDEPS="TRUE" ;;
           deplist) FULLDEPLIST="TRUE" ;;
           edit) VERBOSE="TRUE" ; EDIT_PKGBUILD="TRUE" ;;
@@ -290,13 +290,12 @@ function print_help()
   printf "$(gettext "It currently fetches both ABS and AUR")\n"
   printf "\n"
   printf "$(gettext "USAGE:")\n"
-  printf "  $(gettext "%s [options] package")\n" "$CMD_BIN"
+  printf "  $(gettext "%s [options] [package|repository]")\n" "$CMD_BIN"
   printf "\n"
   printf "$(gettext "OPTIONS:")\n"
   printf "  $(gettext "General:")\n"
   printf "  $(gettext "  --help                print this help")\n"
   printf "  $(gettext "  --clean               remove previous log")\n"
-  printf "  $(gettext "  --edit                be verbose and edit PKGBUILD")\n"
   printf "  $(gettext "  --gccinfo             print current compilation flags")\n"
   printf "  $(gettext "  --nocolor             do not use any color")\n"
   printf "  $(gettext "  --notitle             do not print the title")\n"
@@ -310,8 +309,8 @@ function print_help()
   printf "  $(gettext "(-S) -u, --sysupgrade   build the updated packages")\n"
   printf "  $(gettext "(-S) -v, --verbose      print makepkg output")\n"
   printf "  $(gettext "Additional parameters:")\n"
-  printf "  $(gettext "  -p, --pretend         only print the final list of packages to be installed")\n"
-  printf "  $(gettext "  -a, --confirm         ask again after printing the list of packages to be installed")\n"
+  printf "  $(gettext "  -p, --pretend         print the final list of packages to be installed")\n"
+  printf "  $(gettext "  -n, --noconfirm       do not ask for any confirmation")\n"
   printf "  $(gettext "  -m, --match <regex>   only install packages matching <regex>")\n"
   printf "  $(gettext "  -d, --deplist         recursively list all dependencies first")\n"
 #  printf "  $(gettext "  -s, --search <regex>  search for packages matching <regex>")\n"
@@ -333,6 +332,7 @@ function print_gcc_info()
   printf "${BOLD}Chost:${DEFA} ${CHOST}\n"
   printf "${BOLD}Cflags:${DEFA} ${CFLAGS}\n"
   printf "${BOLD}Cxxflags:${DEFA} ${CXXFLAGS}\n"
+  printf "${BOLD}Makeflags:${DEFA} ${MAKEFLAGS}\n"
   printf "\n"
 }
 
@@ -366,19 +366,19 @@ function print_refreshing_database()
 
 function print_repo()
 {
-  printf "${BOLD}$(gettext "Repo: ")${DEFA} $1\n"
+  printf "${BOLD}$(gettext "Repository: ")${DEFA} $1\n"
 }
 
 function print_resume_detected()
 {
-  printf "${YELL}==> $(gettext "ATTENTION:")${DEFA}"
+  printf "${YELL}==> $(gettext "WARNING:")${DEFA}"
   printf "${BOLD} $(gettext "Previous build detected.")"
   printf " $(gettext "Do you want to resume? (Y/n):")${DEFA} "
 }
 
 function print_resume_overwrite()
 {
-  printf "${YELL}==> $(gettext "ATTENTION:")${DEFA}"
+  printf "${YELL}==> $(gettext "WARNING:")${DEFA}"
   printf "${BOLD} $(gettext "Your previous build will be overwritten.")"
   printf " $(gettext "Continue? (y/N):")${DEFA} "
 }
@@ -849,11 +849,12 @@ function build_multiple_packages()
 
   [ "$FULLDEPLIST" = "TRUE" ] && list_all_package_depends
 
-  if [ "$CONFIRM" = "TRUE" ]; then
+  if [ "$NOCONFIRM" != "TRUE" ]; then
       printf "$(gettext "Do you want to continue? (Y/n):")${DEFA} "
       read CONFIRM_ANSWER
-      if [ "$CONFIRM_ANSWER" != "Y" ]; then
-	  return 0
+      if [ "$CONFIRM_ANSWER" == "n" ]; then
+        printf "$(gettext "Exiting...")\n"
+        exit 0
       fi
   fi
 
