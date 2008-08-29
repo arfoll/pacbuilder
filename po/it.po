@@ -221,7 +221,7 @@ msgstr "  --explicit            ricompila solo i pacchetti esplicitamente instal
 
 #: src/pacbuilder:320
 msgid "  --devel               recompile only installated devel packages"
-msgstr "  --devel               ricomila solo i pacchetti del ramo in sviluppo"
+msgstr "  --devel               ricompila solo i pacchetti del ramo in sviluppo"
 
 #: src/pacbuilder:321
 msgid "Target repository:"
