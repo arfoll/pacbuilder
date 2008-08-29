@@ -290,7 +290,7 @@ function print_help()
   printf "$(gettext "It currently fetches both ABS and AUR")\n"
   printf "\n"
   printf "$(gettext "USAGE:")\n"
-  printf "  $(gettext "%s [options] [package|repository]")\n" "$CMD_BIN"
+  printf "  $(gettext "%s [options] package|repository")\n" "$CMD_BIN"
   printf "\n"
   printf "$(gettext "OPTIONS:")\n"
   printf "  $(gettext "General:")\n"
