@@ -1,12 +1,12 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Italian translation for Pacbuilder.
+# Copyright (C) 2008 Andrea Cimitan <andrea.cimitan@gmail.com>
+# This file is distributed under the same license as the Pacbuilder package.
+# Andrea Scarpino <bash.lnx@gmail.com>, 2008.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PacBuilder\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: <bash.lnx@gmail.com>\n"
 "POT-Creation-Date: 2008-08-29 18:36+0200\n"
 "PO-Revision-Date: 2008-08-29 19:02+0100\n"
 "Last-Translator: Andrea Scarpino <bash.lnx@gmail.com>\n"
@@ -14,8 +14,6 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Poedit-Language: Italian\n"
-"X-Poedit-Country: ITALY\n"
 
 #: src/pacbuilder:24
 msgid "%s requires root permissions to run"
