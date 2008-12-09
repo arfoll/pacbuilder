@@ -30,7 +30,7 @@ function check_uid()
 {
   ROOT_UID=0
   E_NONROOT=67
-  if [ "$UID" -ne "$ROOT_UID" ]
+  if [ "$UID" -ne "$ROOT_UID" -a "$HELP" != "TRUE" ]
   then
     printf "$(gettext "%s requires root permissions to run")\n" "$CMD_NAME"
     exit $E_NONROOT
@@ -149,7 +149,7 @@ function check_args()
          *) INSTALLPKGS=${INSTALLPKGS}${EXTRA_FLAG}" " ; shift ;;
       esac
     done
-    while getopts ":Sbpndefkuvhm:-:" ARGS ; do
+    while getopts ":Sbpndefksuvhm:-:" ARGS ; do
       case $ARGS in
         S) INSTALLING="TRUE" ;;
         b) BUILDDEPS="TRUE" ;;
@@ -163,6 +163,7 @@ function check_args()
         v) VERBOSE="TRUE" ;;
         h) HELP="TRUE" ;;
         m) set_regex $OPTARG ;;
+        s) SEARCH="TRUE" ; shift $((OPTIND -1)); set_regex $1; shift; OPTIND=1 ;;
         -)
         case $OPTARG in
           core) add_repository "core" ;;
@@ -198,6 +199,12 @@ function check_args()
           world) add_type "world" ;;
           devel) add_type "devel" ;;
           match)
+          shift $(($OPTIND - 1))
+          set_regex $1
+          shift
+          OPTIND=1
+          ;;
+          search) SEARCH="TRUE"
           shift $(($OPTIND - 1))
           set_regex $1
           shift
@@ -324,7 +331,7 @@ function print_help()
   printf "  $(gettext "  -n, --noconfirm       do not ask for any confirmation")\n"
   printf "  $(gettext "  -m, --match <regex>   only install packages matching <regex>")\n"
   printf "  $(gettext "  -d, --deplist         recursively list all dependencies first")\n"
-#  printf "  $(gettext "  -s, --search <regex>  search for packages matching <regex>")\n"
+  printf "  $(gettext "  -s, --search <regex>  search for packages matching <regex>")\n"
   printf "  $(gettext "Type:")\n"
   printf "  $(gettext "  --world               recompile both deps and explicit")\n"
   printf "  $(gettext "  --explicit            recompile explicitely installed packages")\n"
@@ -539,7 +546,7 @@ function get_package_makedepends()
   return $CHECK_MAKEDEP
 }
 
-function get_pkgbuild()
+function get_pkg_repo()
 {
   REPO=`LC_ALL=C $PACMANBIN -Si ${1} 2> /dev/null \
         | grep -m1 Repository \
@@ -548,10 +555,16 @@ function get_pkgbuild()
     core) ;;
     extra) ;;
     testing) ;;
-    community) REPO=${REPO}/`get_community_category ${1}` ;;
+    community) ;;
     *) REPO="aur" ;;
   esac
+}
+
+function get_pkgbuild()
+{
+  get_pkg_repo ${1}
   if [ "$REPO" != "aur" ]; then
+    [ "$REPO" == "community" ] && REPO=${REPO}/`get_community_category ${1}`
     #abs; cp -rf /var/abs/${REPO}/${1} ${BUILD_DIR}
     $SYNCCMD $SYNCARGS ${SYNCSERVER}::abs/${CARCH}/${REPO}/${1} ${BUILD_DIR}
     if [ ! -f ${BUILD_DIR}/${1}/PKGBUILD ]; then
@@ -861,10 +874,10 @@ function build_multiple_packages()
   [ "$FULLDEPLIST" = "TRUE" ] && list_all_package_depends
 
   if [ "$NOCONFIRM" != "TRUE" ]; then
-      printf "$(gettext "Do you want to continue? (Y/n):")${DEFA} "
+      printf "${BOLD} $(gettext "Do you want to continue? (Y/n):")${DEFA} "
       read CONFIRM_ANSWER
-      if [ "$CONFIRM_ANSWER" == "n" ]; then
-        printf "$(gettext "Exiting...")\n"
+      if [ "$CONFIRM_ANSWER" = "n" ]; then
+        printf "${LRED} $(gettext "Exiting...")\n ${DEFA}"
         exit 0
       fi
   fi
@@ -1168,6 +1181,20 @@ function type_devel()
   DONE_WORLD="TRUE"
 }
 
+function search()
+{
+  MATCHED=`$PACMANBIN -Ss $PKG_REGEX`
+  line=`wget -q "http://aur.archlinux.org/packages.php?setlang=en&do_Search=SeB=nd&L=2&C=0&PP=100&K=$PKG_REGEX" -O - \
+      | grep -A 2 "<a href='/packages.php?ID=" | sed -e "s/<\/span>.*$//" -e "s/^.*packages.php?ID=.*span class.*'>/aur\//" \
+      -e "s/^.*span class.*'>//" | grep -v "&nbsp;" | grep -v "^--"`
+  if [ "${#line}" -gt 0 ]; then
+    package=$(echo $line | awk '{ print $1}' | sed 's/^.*\///')
+    version=$(echo $line | awk '{print $2}')
+    MATCHED="${MATCHED} aur/${package} ${version}\n"
+  fi
+  printf "$MATCHED \n"
+}
+
 # END_SECTION - select packages
 # BEGIN_SECTION - application run
 
@@ -1175,9 +1202,9 @@ function main()
 {
   source gettext.sh
   environment
-  check_uid
   check_required_binaries
   check_args $@
+  check_uid
   colorize_output
   [ "$NOTITLE" != "TRUE" ] && print_title
   [ "$HELP" == "TRUE" ] && print_help && exit
@@ -1186,6 +1213,7 @@ function main()
   [ "$NORESUME" != "TRUE" ] && resume
   [ "$SYSUPGRADE" == "TRUE" ] && sysupgrade
   [ "$INSTALLING" == "TRUE" ] && install
+  [ "$SEARCH" == "TRUE" ] && search
   read_type
 }
 
