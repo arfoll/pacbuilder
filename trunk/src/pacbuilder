@@ -500,9 +500,12 @@ function get_package_depends()
       print_building_dep $DEP
       LOG_FILE=${TMP_PATH}/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
       NOCOLOR=$NOCOLOR VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
-      GCCINFO="" \
-      DEPENDENCY_OF="dependency of $pkgname" PACMAN_FLAGS="--asdeps" \
-      $CMD_BIN --notitle --noresume --builddeps --install $DEP || CHECK_DEP=1
+      GCCINFO="" DEPENDENCY_OF="dependency of $pkgname" PACMAN_FLAGS="--asdeps"
+      if [ "$NOCONFIRM" != "TRUE" ]; then
+        $CMD_BIN --notitle --noresume --builddeps --install $DEP || CHECK_DEP=1
+      else
+        $CMD_BIN --notitle --noresume --noconfirm --builddeps --install $DEP || CHECK_DEP=1
+      fi
       rm -rf LOG_FILE=${TMP_PATH}/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
       [ $CHECK_DEP -eq 1 ] && return 1
     fi
@@ -535,9 +538,12 @@ function get_package_makedepends()
       LOG_FILE=${TMP_PATH}/${CMD_BIN}/${CMD_BIN}-${pkgname}.log \
       PACMAN_FLAGS="--asdeps" VERBOSE=$VERBOSE EDIT_PKGBUILD=$EDIT_PKGBUILD \
       GCCINFO="" \
-      DEPENDENCY_OF="makedependency of $pkgname" PACMAN_FLAGS="--asdeps" \
-      $CMD_BIN --notitle --noresume --builddeps --install $MAKEDEP || \
-      CHECK_MAKEDEP=1
+      DEPENDENCY_OF="makedependency of $pkgname" PACMAN_FLAGS="--asdeps"
+      if [ "$NOCONFIRM" != "TRUE" ]; then
+        $CMD_BIN --notitle --noresume --builddeps --install $MAKEDEP || CHECK_MAKEDEP=1
+      else
+        $CMD_BIN --notitle --noresume --noconfirm --builddeps --install $MAKEDEP || CHECK_MAKEDEP=1
+      fi
       rm -rf LOG_FILE=${TMP_PATH}/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
       [ $CHECK_MAKEDEP -eq 1 ] && return 1
       MAKEDEPS_INSTALLED=${MAKEDEPS_INSTALLED}${MAKEDEP}" "
@@ -821,7 +827,7 @@ function list_package_depends()
       if [ -f ${BUILD_DIR}/${DEP}/PKGBUILD ]; then
         list_package_depends $DEP || CHECK_DEPS=1
       else
-	  printf "\r${LRED}$(gettext "Missing PKGBUILD for"):${DEFA} ${DEP}\n"
+      printf "\r${LRED}$(gettext "Missing PKGBUILD for"):${DEFA} ${DEP}\n"
       fi
   done
 }
@@ -861,13 +867,13 @@ function build_multiple_packages()
   if [ "$PRETEND" = "TRUE" ]; then
       printf "${YELL}$(gettext "The following packages would be built:")${DEFA}\n"
       for CPKG in $PACKAGES; do
-	  msg "$CPKG"
+      msg "$CPKG"
       done
       return 0
   elif [ "$NOTITLE" != "TRUE" ]; then
       printf "${YELL}$(gettext "The following packages will be built:")${DEFA}\n"
       for CPKG in $PACKAGES; do
-	  msg "$CPKG"
+      msg "$CPKG"
       done
   fi
 
