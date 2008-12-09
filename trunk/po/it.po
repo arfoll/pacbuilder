@@ -204,6 +204,10 @@ msgstr "  -m, --match <regex>   installa solo i pacchetti segnati <regex>"
 msgid "  -d, --deplist         recursively list all dependencies first"
 msgstr "  -d, --deplist         mostra tutte le dipendenze prima"
 
+#: src/pacbuilder:334
+msgid "  -s, --search <regex>  search for packages matching <regex>"
+msgstr "  -s, --search <regex>  cerca i pacchetti segnati <regex>"
+
 #: src/pacbuilder:317
 #: src/pacbuilder:408
 msgid "Type:"
