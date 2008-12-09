@@ -177,7 +177,7 @@ function check_args()
           shift
           OPTIND=1
           ;;
-          
+
           help) HELP="TRUE" ;;
           verbose) VERBOSE="TRUE" ;;
           pretend) PRETEND="TRUE" ;;
