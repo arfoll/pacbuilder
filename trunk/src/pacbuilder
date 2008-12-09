@@ -163,7 +163,7 @@ function check_args()
         v) VERBOSE="TRUE" ;;
         h) HELP="TRUE" ;;
         m) set_regex $OPTARG ;;
-        s) SEARCH="TRUE" ; shift $((OPTIND -1)); set_regex $1; shift; OPTIND=1 ;;
+        s) SEARCH="TRUE" ; shift $(($OPTIND - 1)); set_regex $1; shift; OPTIND=1 ;;
         -)
         case $OPTARG in
           core) add_repository "core" ;;
