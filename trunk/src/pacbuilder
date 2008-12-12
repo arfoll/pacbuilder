@@ -205,7 +205,7 @@ function check_args()
           explicit) add_type "explicit" ;;
           world) add_type "world" ;;
           devel) add_type "devel" ;;
-		  export) shift ; EXPORT_DIR=$1 ;;
+          export) shift ; EXPORT_DIR=$1 ;;
           match)
           shift $(($OPTIND - 1))
           set_regex $1
@@ -934,10 +934,10 @@ function build_multiple_packages()
           get_pkginfo
           print_installing
         fi
-		[ "$FORCE" == "TRUE" ] && FORCE_FLAG="--force"
+        [ "$FORCE" == "TRUE" ] && FORCE_FLAG="--force"
         launch_with_su "$PACMANBIN -U --noconfirm $FORCE_FLAG $PACMAN_FLAGS \
           ${PKGDEST}/$pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz" &> /dev/null \
-		  || CHECK_INSTALL=1
+          || CHECK_INSTALL=1
       fi
     else
       CHECK_INSTALL=1
@@ -958,7 +958,7 @@ function build_multiple_packages()
      [ -n "$MAKEDEPS_INSTALLED" ]; then
     print_uninstalling_deps
     launch_with_su "$PACMANBIN -Rd --noconfirm $MAKEDEPS_INSTALLED" \
-	&> /dev/null || CHECK_UNINSTALL=1
+    &> /dev/null || CHECK_UNINSTALL=1
     print_checkuninstall $CHECK_UNINSTALL
   fi
   if [ -n "$ERROR_PKGS" ]; then
