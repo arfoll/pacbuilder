@@ -957,8 +957,8 @@ function build_multiple_packages()
   if [ "$KEEPDEPS" != "TRUE" ] &&
      [ -n "$MAKEDEPS_INSTALLED" ]; then
     print_uninstalling_deps
-    launch_with_su "$PACMANBIN -Rd --noconfirm \
-    $MAKEDEPS_INSTALLED" &> /dev/null || CHECK_UNINSTALL=1
+    launch_with_su "$PACMANBIN -Rd --noconfirm $MAKEDEPS_INSTALLED" \
+	&> /dev/null || CHECK_UNINSTALL=1
     print_checkuninstall $CHECK_UNINSTALL
   fi
   if [ -n "$ERROR_PKGS" ]; then
@@ -1137,14 +1137,14 @@ function sysupgrade_aur()
 
 function sysupgrade_local()
 {
-  PACKAGES=(`launch_with_su "$PACMANBIN --sync --sysupgrade --print-uris \
+  PACKAGES=(`launch_with_su "$PACMANBIN --sync --sysupgrade --print-uris" \
              | grep "^\(ftp:\/\/\|http:\/\/\|file:\/\/\)" \
              | sed -e "s/-i686.pkg.tar.gz$//" \
                    -e "s/-x86_64.pkg.tar.gz$//" \
                    -e "s/-any.pkg.tar.gz$//" \
                    -e "s/.pkg.tar.gz//" \
                    -e "s/^.*\///" \
-                   -e "s/-[^-]*-[^-]*$//" "`)
+                   -e "s/-[^-]*-[^-]*$//"`)
   for PACKAGE in ${PACKAGES[@]}; do
     echo $PACKAGE >> $LOG_FILE
   done
@@ -1152,7 +1152,7 @@ function sysupgrade_local()
 
 function type_deps()
 {
- $PACMANBIN -Qqd > $LOG_FILE
+  $PACMANBIN -Qqd > $LOG_FILE
   if [ "$DONE_DEPS" != "TRUE" ]; then
     print_type "$(gettext "deps packages")"
     build_type
