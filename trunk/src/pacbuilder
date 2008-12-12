@@ -26,14 +26,20 @@ export TEXTDOMAINDIR='/usr/share/locale'
 
 # BEGIN_SECTION - environment checks
 
-function check_uid()
+function launch_with_su()
 {
-  ROOT_UID=0
-  E_NONROOT=67
-  if [ "$UID" -ne "$ROOT_UID" -a "$HELP" != "TRUE" ]
-  then
-    printf "$(gettext "%s requires root permissions to run")\n" "$CMD_NAME"
-    exit $E_NONROOT
+  # try to launch $1 with sudo, else prompt for root password
+  #msg "try to launch '${@}' with sudo"
+  command=`echo $* | awk '{print $1}'`
+
+  if [ $SUDOINSTALLED -eq 1 ] && sudo -l | grep "\(${command}\ *$\|ALL\)" 1>/dev/null; then
+    sudo $@ || return 1
+  else
+    UID_ROOT=0
+    if [ "$UID" -ne "$UID_ROOT" ]; then
+      echo -e $(eval_gettext 'You are not allowed to launch $command with sudo\nPlease enter root password')
+    fi
+    return 1
   fi
 }
 
@@ -81,7 +87,7 @@ function environment()
 
   [ -z "$CARCH" ] && CARCH="i686"
   [ -z "$TMP_PATH" ] && TMP_PATH=/tmp
-  [ -z "$LOG_FILE" ] && LOG_FILE=/var/log/${CMD_BIN}-packages.log
+  [ -z "$LOG_FILE" ] && LOG_FILE=~/${CMD_BIN}-packages.log
   [ -z "$PKGDEST" ] && PKGDEST="."
   BUILD_DIR=${TMP_PATH}/${CMD_BIN}/build
   SYNCCMD="rsync"
@@ -94,6 +100,7 @@ function environment()
               | sed "s/\/$//"`
 
   mkdir -p $BUILD_DIR
+  if [ `type -p sudo` ]; then SUDOINSTALLED=1; fi
 }
 
 # END_SECTION - environment checks
@@ -312,36 +319,36 @@ function print_help()
   printf "\n"
   printf "$(gettext "OPTIONS:")\n"
   printf "  $(gettext "General:")\n"
-  printf "  $(gettext "  --help                print this help")\n"
-  printf "  $(gettext "  --clean               remove previous log")\n"
-  printf "  $(gettext "  --gccinfo             print current compilation flags")\n"
-  printf "  $(gettext "  --nocolor             do not use any color")\n"
-  printf "  $(gettext "  --notitle             do not print the title")\n"
-  printf "  $(gettext "  --noresume            do not resume")\n"
+  printf "  $(gettext "  --help                  print this help")\n"
+  printf "  $(gettext "  --clean                 remove previous log")\n"
+  printf "  $(gettext "  --gccinfo               print current compilation flags")\n"
+  printf "  $(gettext "  --nocolor               do not use any color")\n"
+  printf "  $(gettext "  --notitle               do not print the title")\n"
+  printf "  $(gettext "  --noresume              do not resume")\n"
   printf "  $(gettext "Install:")\n"
-  printf "  $(gettext "(-S),    --install      build specified packages")\n"
-  printf "  $(gettext "(-S) -b, --builddeps    build and install the dependencies")\n"
-  printf "  $(gettext "(-S) -e, --edit         be verbose and edit PKGBUILD")\n"
-  printf "  $(gettext "(-S) -f, --force        force install, overwrite conflicting files")\n"
-  printf "  $(gettext "(-S) -k, --keepdeps     keep makedepends after install")\n"
-  printf "  $(gettext "(-S) -u, --sysupgrade   build the updated packages")\n"
-  printf "  $(gettext "(-S) -v, --verbose      print makepkg output")\n"
+  printf "  $(gettext "(-S),    --install        build specified packages")\n"
+  printf "  $(gettext "(-S) -b, --builddeps      build and install the dependencies")\n"
+  printf "  $(gettext "(-S) -e, --edit           be verbose and edit PKGBUILD")\n"
+  printf "  $(gettext "(-S) -f, --force          force install, overwrite conflicting files")\n"
+  printf "  $(gettext "(-S) -k, --keepdeps       keep makedepends after install")\n"
+  printf "  $(gettext "(-S) -s, --search <regex> search for packages matching <regex>")\n"
+  printf "  $(gettext "(-S) -u, --sysupgrade     build the updated packages")\n"
+  printf "  $(gettext "(-S) -v, --verbose        print makepkg output")\n"
   printf "  $(gettext "Additional parameters:")\n"
-  printf "  $(gettext "  -p, --pretend         print the final list of packages to be installed")\n"
-  printf "  $(gettext "  -n, --noconfirm       do not ask for any confirmation")\n"
-  printf "  $(gettext "  -m, --match <regex>   only install packages matching <regex>")\n"
-  printf "  $(gettext "  -d, --deplist         recursively list all dependencies first")\n"
-  printf "  $(gettext "  -s, --search <regex>  search for packages matching <regex>")\n"
+  printf "  $(gettext "  -p, --pretend           print the final list of packages to be installed")\n"
+  printf "  $(gettext "  -n, --noconfirm         do not ask for any confirmation")\n"
+  printf "  $(gettext "  -m, --match <regex>     only install packages matching <regex>")\n"
+  printf "  $(gettext "  -d, --deplist           recursively list all dependencies first")\n"
   printf "  $(gettext "Type:")\n"
-  printf "  $(gettext "  --world               recompile both deps and explicit")\n"
-  printf "  $(gettext "  --explicit            recompile explicitely installed packages")\n"
-  printf "  $(gettext "  --devel               recompile only installated devel packages")\n"
+  printf "  $(gettext "  --world                 recompile both deps and explicit")\n"
+  printf "  $(gettext "  --explicit              recompile explicitely installed packages")\n"
+  printf "  $(gettext "  --devel                 recompile only installated devel packages")\n"
   printf "  $(gettext "Target repository:")\n"
-  printf "  $(gettext "  --core                recompile packages in core")\n"
-  printf "  $(gettext "  --extra               recompile packages in extra")\n"
-  printf "  $(gettext "  --testing             recompile packages in testing")\n"
-  printf "  $(gettext "  --community           recompile packages in community")\n"
-  printf "  $(gettext "  --aur                 recompile packages in aur")\n"
+  printf "  $(gettext "  --core                  recompile packages in core")\n"
+  printf "  $(gettext "  --extra                 recompile packages in extra")\n"
+  printf "  $(gettext "  --testing               recompile packages in testing")\n"
+  printf "  $(gettext "  --community             recompile packages in community")\n"
+  printf "  $(gettext "  --aur                   recompile packages in aur")\n"
 }
 
 function print_gcc_info()
@@ -506,7 +513,7 @@ function get_package_depends()
       else
         $CMD_BIN --notitle --noresume --noconfirm --builddeps --install $DEP || CHECK_DEP=1
       fi
-      rm -rf LOG_FILE=${TMP_PATH}/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
+      rm -rf $LOG_FILE
       [ $CHECK_DEP -eq 1 ] && return 1
     fi
   done
@@ -544,7 +551,7 @@ function get_package_makedepends()
       else
         $CMD_BIN --notitle --noresume --noconfirm --builddeps --install $MAKEDEP || CHECK_MAKEDEP=1
       fi
-      rm -rf LOG_FILE=${TMP_PATH}/${CMD_BIN}/${CMD_BIN}-${pkgname}.log
+      rm -rf $LOG_FILE
       [ $CHECK_MAKEDEP -eq 1 ] && return 1
       MAKEDEPS_INSTALLED=${MAKEDEPS_INSTALLED}${MAKEDEP}" "
     fi
@@ -767,7 +774,7 @@ function is_provided()
 
 function refresh_database()
 {
-  $PACMANBIN --sync --refresh &> /dev/null
+  launch_with_su "$PACMANBIN --sync --refresh" &> /dev/null
 }
 
 
@@ -916,22 +923,22 @@ function build_multiple_packages()
       [ $CHECK_DEPS -ne 0 ] && CHECK_INSTALL=1
       if [ $CHECK_DEPS -eq 0 ]; then
         if [ "$VERBOSE" != "TRUE" ]; then
-          makepkg -Af --asroot --noconfirm $NOCOLOR_FLAG &> /dev/null || \
+          makepkg -Af --noconfirm $NOCOLOR_FLAG &> /dev/null || \
           CHECK_MAKEPKG=1
           get_pkginfo
         else
           printf "\n"
-          makepkg -Af --asroot --noconfirm $NOCOLOR_FLAG || CHECK_MAKEPKG=1
+          makepkg -Af --noconfirm $NOCOLOR_FLAG || CHECK_MAKEPKG=1
           get_pkginfo
           print_installing
         fi
         if [ "$FORCE" != "TRUE" ]; then
-          $PACMANBIN -U --noconfirm $PACMAN_FLAGS \
-            ${PKGDEST}/$pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz &> /dev/null || \
+          launch_with_su "$PACMANBIN -U --noconfirm $PACMAN_FLAGS \
+            ${PKGDEST}/$pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz" &> /dev/null || \
           CHECK_INSTALL=1
         else
-          $PACMANBIN -Uf --noconfirm $PACMAN_FLAGS \
-            ${PKGDEST}/$pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz &> /dev/null || \
+          launch_with_su "$PACMANBIN -Uf --noconfirm $PACMAN_FLAGS \
+            ${PKGDEST}/$pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz" &> /dev/null || \
           CHECK_INSTALL=1
         fi
       fi
@@ -950,8 +957,8 @@ function build_multiple_packages()
   if [ "$KEEPDEPS" != "TRUE" ] &&
      [ -n "$MAKEDEPS_INSTALLED" ]; then
     print_uninstalling_deps
-    $PACMANBIN -Rd --noconfirm \
-    $MAKEDEPS_INSTALLED &> /dev/null || CHECK_UNINSTALL=1
+    launch_with_su "$PACMANBIN -Rd --noconfirm \
+    $MAKEDEPS_INSTALLED" &> /dev/null || CHECK_UNINSTALL=1
     print_checkuninstall $CHECK_UNINSTALL
   fi
   if [ -n "$ERROR_PKGS" ]; then
@@ -1130,14 +1137,14 @@ function sysupgrade_aur()
 
 function sysupgrade_local()
 {
-  PACKAGES=(`$PACMANBIN --sync --sysupgrade --print-uris \
+  PACKAGES=(`launch_with_su "$PACMANBIN --sync --sysupgrade --print-uris \
              | grep "^\(ftp:\/\/\|http:\/\/\|file:\/\/\)" \
              | sed -e "s/-i686.pkg.tar.gz$//" \
                    -e "s/-x86_64.pkg.tar.gz$//" \
                    -e "s/-any.pkg.tar.gz$//" \
                    -e "s/.pkg.tar.gz//" \
                    -e "s/^.*\///" \
-                   -e "s/-[^-]*-[^-]*$//" `)
+                   -e "s/-[^-]*-[^-]*$//" "`)
   for PACKAGE in ${PACKAGES[@]}; do
     echo $PACKAGE >> $LOG_FILE
   done
@@ -1145,7 +1152,7 @@ function sysupgrade_local()
 
 function type_deps()
 {
-  $PACMANBIN -Qqd > $LOG_FILE
+ $PACMANBIN -Qqd > $LOG_FILE
   if [ "$DONE_DEPS" != "TRUE" ]; then
     print_type "$(gettext "deps packages")"
     build_type
@@ -1210,7 +1217,6 @@ function main()
   environment
   check_required_binaries
   check_args $@
-  check_uid
   colorize_output
   [ "$NOTITLE" != "TRUE" ] && print_title
   [ "$HELP" == "TRUE" ] && print_help && exit
@@ -1218,8 +1224,14 @@ function main()
   [ "$GCCINFO" == "TRUE" ] && print_gcc_info
   [ "$NORESUME" != "TRUE" ] && resume
   [ "$SYSUPGRADE" == "TRUE" ] && sysupgrade
-  [ "$INSTALLING" == "TRUE" ] && install
-  [ "$SEARCH" == "TRUE" ] && search
+  if [ "$INSTALLING" == "TRUE" ]; then
+    if [ "$SEARCH" == "TRUE" ]; then
+      search
+    else
+      install
+    fi
+  fi
+
   read_type
 }
 
