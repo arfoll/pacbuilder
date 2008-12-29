@@ -923,14 +923,15 @@ function build_multiple_packages()
       get_package_makedepends || CHECK_DEPS=2
       get_package_depends || CHECK_DEPS=1
       [ $CHECK_DEPS -ne 0 ] && CHECK_INSTALL=1
-      if [ $CHECK_DEPS -eq 0 ]; then
+	  [ $UID -eq 0 ] && ASROOT_FLAG="--asroot"
+	  if [ $CHECK_DEPS -eq 0 ]; then
         if [ "$VERBOSE" != "TRUE" ]; then
-          makepkg -Af --noconfirm $NOCOLOR_FLAG &> /dev/null || \
+          makepkg -Af --noconfirm $ASROOT_FLAG $NOCOLOR_FLAG &> /dev/null || \
           CHECK_MAKEPKG=1
           get_pkginfo
         else
           printf "\n"
-          makepkg -Af --noconfirm $NOCOLOR_FLAG || CHECK_MAKEPKG=1
+          makepkg -Af --noconfirm $ASROOT_FLAG $NOCOLOR_FLAG || CHECK_MAKEPKG=1
           get_pkginfo
           print_installing
         fi
