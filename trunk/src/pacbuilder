@@ -83,7 +83,13 @@ function environment()
   LICENSE="GPLv3"
 
   source /etc/makepkg.conf
+  if [ -r ~/.makepkg.conf ]; then
+    source ~/.makepkg.conf
+  fi
   source /etc/${CMD_BIN}.conf
+  if [ -r ~/.${CMD_BIN}.conf ]; then
+    source ~/.${CMD_BIN}.conf
+  fi
 
   [ -z "$CARCH" ] && CARCH="i686"
   [ -z "$TMP_PATH" ] && TMP_PATH=/tmp
