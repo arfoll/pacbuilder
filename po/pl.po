@@ -1,0 +1,364 @@
+# Polish translation for Pacbuilder.
+# Copyright (C) 2008 Andrea Cimitan <andrea.cimitan@gmail.com>
+# This file is distributed under the same license as the Pacbuilder package.
+# Marcin Karpezo <sirmacik at gmail dot com>, 2009.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PacBuilder\n"
+"Report-Msgid-Bugs-To: <bash.lnx@gmail.com>\n"
+"POT-Creation-Date: 2009-04-18 14:25+0200\n"
+"PO-Revision-Date: 2009-04-16 17:17+0200\n"
+"Last-Translator: Marcin Karpezo <sirmacik at gmail dot com>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/pacbuilder:24
+msgid "%s requires root permissions to run"
+msgstr "%s do uruchomienia programu wymagane są uprawnienia roota"
+
+#: src/pacbuilder:32
+msgid "You need to install %s!"
+msgstr "Powinieneś zainstalować %s!"
+
+#: src/pacbuilder:218
+msgid "Building %s"
+msgstr "Budowanie %s"
+
+#: src/pacbuilder:222
+#: src/pacbuilder:346
+msgid "package %s of %d"
+msgstr "pakiet %s z %d"
+
+#: src/pacbuilder:231
+msgid "depends on %s!"
+msgstr "wymaga %s"
+
+#: src/pacbuilder:241
+msgid "missing dependency!"
+msgstr "brakująca zależność!"
+
+#: src/pacbuilder:243
+msgid "missing make-dependency!"
+msgstr "brakująca zależność (make-dependency)!"
+
+#: src/pacbuilder:244
+msgid "The following packages are required for compilation"
+msgstr "Następujące pakiety są wymagane przy kompilacji"
+
+#: src/pacbuilder:246
+msgid "makepkg failed!"
+msgstr "działanie makepkg zakończyło się niepowodzeniem!"
+
+#: src/pacbuilder:248
+msgid "PKGBUILD not found!"
+msgstr "Nie znaleziono PKGBUILD!"
+
+#: src/pacbuilder:250
+#: src/pacbuilder:260
+msgid "error!"
+msgstr "błąd!"
+
+#: src/pacbuilder:253
+msgid "installed!"
+msgstr "zainstalowano!"
+
+#: src/pacbuilder:262
+msgid "uninstalled!"
+msgstr "usunięto!"
+
+#: src/pacbuilder:268
+#: src/pacbuilder:374
+#: src/pacbuilder:381
+msgid "WARNING:"
+msgstr "UWAGA:"
+
+#: src/pacbuilder:269
+msgid "Do you want to delete your log file and build directory?"
+msgstr "Czy chcesz usunąć logi i katalog roboczy?"
+
+#: src/pacbuilder:270
+msgid "You will not be able to resume it in the future."
+msgstr "Nie będziesz mógł tego przywrócić."
+
+#: src/pacbuilder:271
+msgid "Are you sure? (y/N):"
+msgstr "Jesteś pewien? (y/N);"
+
+#: src/pacbuilder:276
+msgid "EDIT PKGBUILD:"
+msgstr "EDYTUJ PKGBUILD:"
+
+#: src/pacbuilder:277
+msgid "Do you want to edit this PKGBUILD? (Y/n):"
+msgstr "Czy chcesz edytować ten PKGBUILD? (Y/n):"
+
+#: src/pacbuilder:282
+#: src/pacbuilder:357
+msgid "ERROR:"
+msgstr "BŁĄD:"
+
+#: src/pacbuilder:283
+msgid "I was unable to install these packages:"
+msgstr "Nie mogę zainstalować następujących paczek:"
+
+#: src/pacbuilder:289
+msgid "A tool to massively recompile packages from sources"
+msgstr "Narzędzie do masowej rekompilacji pakietów"
+
+#: src/pacbuilder:290
+msgid "It currently fetches both ABS and AUR"
+msgstr "Obecnie pobiera źródła z ABS i AUR"
+
+#: src/pacbuilder:292
+msgid "USAGE:"
+msgstr "UŻYWANIE:"
+
+#: src/pacbuilder:293
+msgid "%s [options] package|repository"
+msgstr "%s [opcje] pakiet|repozytorium"
+
+#: src/pacbuilder:295
+msgid "OPTIONS:"
+msgstr "OPCJE:"
+
+#: src/pacbuilder:296
+msgid "General:"
+msgstr "Ogólne:"
+
+#: src/pacbuilder:297
+msgid "  --help                print this help"
+msgstr "  --help                pokazuje te informacje"
+
+#: src/pacbuilder:298
+msgid "  --clean               remove previous log"
+msgstr "  --clean               usuwa poprzednie logi"
+
+#: src/pacbuilder:299
+msgid "  --gccinfo             print current compilation flags"
+msgstr "  --gccinfo             pokazuje aktualne flagi kompilacji"
+
+#: src/pacbuilder:300
+msgid "  --nocolor             do not use any color"
+msgstr "  --nocolor             nie używa kolorów"
+
+#: src/pacbuilder:301
+msgid "  --notitle             do not print the title"
+msgstr "  --notitle             nie pokazuje tytułu"
+
+#: src/pacbuilder:302
+msgid "  --noresume            do not resume"
+msgstr "  --noresume            nie przywraca poprzedniej kompilacji"
+
+#: src/pacbuilder:303
+msgid "Install:"
+msgstr "Instalacja:"
+
+#: src/pacbuilder:304
+msgid "(-S),    --install      build specified packages"
+msgstr "(-S),    --install      buduje żądane pakiety"
+
+#: src/pacbuilder:305
+msgid "(-S) -b, --builddeps    build and install the dependencies"
+msgstr "(-S) -b, --builddeps    buduje i instaluje zależności"
+
+#: src/pacbuilder:306
+msgid "(-S) -e, --edit         be verbose and edit PKGBUILD"
+msgstr "(-S) -e, --edit         edytuje PKGBUILD"
+
+#: src/pacbuilder:307
+msgid "(-S) -f, --force        force install, overwrite conflicting files"
+msgstr "(-S) -f, --force        zmusza do instalacji i zastąpienia konfliktujących plików"
+
+#: src/pacbuilder:308
+msgid "(-S) -k, --keepdeps     keep makedepends after install"
+msgstr "(-S) -k, --keepdeps    zatrzymuje zależności potrzebne do zbudowania pakietu po instalacji"
+
+#: src/pacbuilder:309
+msgid "(-S) -u, --sysupgrade   build the updated packages"
+msgstr "(-S) -u, --sysupgrade   buduje aktualizowane pakiety"
+
+#: src/pacbuilder:310
+msgid "(-S) -v, --verbose      print makepkg output"
+msgstr "(-S) -v, --verbose      pokazuje komunikaty makepkg"
+
+#: src/pacbuilder:311
+msgid "Additional parameters:"
+msgstr "Dodatkowe parametry:"
+
+#: src/pacbuilder:312
+msgid "  -p, --pretend         print the final list of packages to be installed"
+msgstr "  -p, --pretend         pokazuje końcową listę pakietów do zainstalowania"
+
+#: src/pacbuilder:313
+msgid "  -n, --noconfirm       do not ask for any confirmation"
+msgstr "  -n, --noconfirm       nie żąda potwierdzenia żadnej operacji"
+
+#: src/pacbuilder:314
+msgid "  -m, --match <regex>   only install packages matching <regex>"
+msgstr "  -m, --match <regex>   zainstaluj tylko pakiety pasujące do <regex>"
+
+#: src/pacbuilder:315
+msgid "  -d, --deplist         recursively list all dependencies first"
+msgstr "  -d, --deplist         rekursywnie pokazuje najpierw wszystkie wymagane zależności"
+
+#: src/pacbuilder:334
+msgid "  -s, --search <regex>  search for packages matching <regex>"
+msgstr "  -s, --search <regex>  szuka pakietu pasującego do <regex>"
+
+#: src/pacbuilder:317
+#: src/pacbuilder:408
+msgid "Type:"
+msgstr "Typ:"
+
+#: src/pacbuilder:318
+msgid "  --world               recompile both deps and explicit"
+msgstr "  --world               rekompiluje zależności i żądane pakiety"
+
+#: src/pacbuilder:319
+msgid "  --explicit            recompile explicitely installed packages"
+msgstr "  --explicit            rekompiluje żądane pakiety"
+
+#: src/pacbuilder:320
+msgid "  --devel               recompile only installated devel packages"
+msgstr "  --devel               rekompiluje tylko zainstalowane pakiety"
+
+#: src/pacbuilder:321
+msgid "Target repository:"
+msgstr "Repozytorium:"
+
+#: src/pacbuilder:322
+msgid "  --core                recompile packages in core"
+msgstr "  --core                rekompiluje pakiety z core"
+
+#: src/pacbuilder:323
+msgid "  --extra               recompile packages in extra"
+msgstr "  --extra               rekompiluje pakiety z extra"
+
+#: src/pacbuilder:324
+msgid "  --testing             recompile packages in testing"
+msgstr "  --testing             rekompiluje pakiety z testing"
+
+#: src/pacbuilder:325
+msgid "  --community           recompile packages in community"
+msgstr "  --community           rekompiluje pakiety z community"
+
+#: src/pacbuilder:326
+msgid "  --aur                 recompile packages in aur"
+msgstr "  --aur                 rekompiluje pakiety z aur"
+
+#: src/pacbuilder:342
+msgid "Installing %s"
+msgstr "Instalowanie %s"
+
+#: src/pacbuilder:352
+msgid "Fetching repositories, this may take a long time..."
+msgstr "Pobieranie repozytoriów, to może trochę potrwać..."
+
+#: src/pacbuilder:358
+msgid "I was unable to find any package to build..."
+msgstr "Nie byłem w stanie znaleźć pakietu do budowania..."
+
+#: src/pacbuilder:359
+msgid "exiting!"
+msgstr "opuszczanie!"
+
+#: src/pacbuilder:364
+msgid "Refreshing pacman database, please wait..."
+msgstr "Odświeżam bazę repozytoriów pacmana, proszę czekaj..."
+
+#: src/pacbuilder:369
+msgid "Repository: "
+msgstr "Repozytorium:"
+
+#: src/pacbuilder:375
+msgid "Previous build detected."
+msgstr "Wcześniej buduj wykryty."
+
+#: src/pacbuilder:376
+msgid "Do you want to resume? (Y/n):"
+msgstr "Czy chcesz przywrócić? (Y/n):"
+
+#: src/pacbuilder:382
+msgid "Your previous build will be overwritten."
+msgstr "Twoje poprzednie dane o kompilacji zostaną nadpisane."
+
+#: src/pacbuilder:383
+msgid "Continue? (y/N):"
+msgstr "Kontynuować? (y/N)"
+
+#: src/pacbuilder:414
+msgid "Uninstalling dependencies:"
+msgstr "Usuwanie zależności:"
+
+#: src/pacbuilder:749
+msgid "Checking dependencies..."
+msgstr "Sprawdzam zależności..."
+
+#: src/pacbuilder:791
+msgid "depends on"
+msgstr "zależy od"
+
+#: src/pacbuilder:800
+msgid "Missing PKGBUILD for"
+msgstr "brakujący PKGBUILD dla"
+
+#: src/pacbuilder:838
+msgid "The following packages would be built:"
+msgstr "Następujące pakiety zostaną zainstalowane:"
+
+#: src/pacbuilder:844
+msgid "The following packages will be built:"
+msgstr "Następujące pakiety zostaną zainstalowane:"
+
+#: src/pacbuilder:853
+msgid "Do you want to continue? (Y/n):"
+msgstr "Kontynuować? (Y/n):"
+
+#: src/pacbuilder:856
+#: src/pacbuilder:1061
+msgid "Exiting..."
+msgstr "Opuszczam..."
+
+#: src/pacbuilder:1009
+msgid "build from every repository"
+msgstr "instaluję z każdego repozytorium"
+
+#: src/pacbuilder:1029
+msgid "No type specified, assuming world..."
+msgstr "Niesprecyzowany typ, wybieram 'world'"
+
+#: src/pacbuilder:1033
+msgid "No repository specified, build all..."
+msgstr "Niesprecyzowane repozytorium, buduję wszystkie..."
+
+#: src/pacbuilder:1053
+msgid "Resuming..."
+msgstr "Przywracanie..."
+
+#: src/pacbuilder:1080
+msgid "System"
+msgstr "System"
+
+#: src/pacbuilder:1081
+msgid "Up-to-date"
+msgstr "Aktualny"
+
+#: src/pacbuilder:1083
+#: src/pacbuilder:1140
+msgid "both deps and explicit packages"
+msgstr "zależności i żądane pakiety"
+
+#: src/pacbuilder:1120
+msgid "deps packages"
+msgstr "zależne pakiety"
+
+#: src/pacbuilder:1130
+msgid "explicit packages"
+msgstr "żądane pakiety"
+
+#: src/pacbuilder:1152
+msgid "recompile only installated devel packages"
+msgstr "rekompiluje tylko zainstalowane pakiety"
