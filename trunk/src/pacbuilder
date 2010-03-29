@@ -372,7 +372,7 @@ function print_gcc_info()
 function print_installing()
 {
   printf "${LGRE}==>${DEFA}"
-  printf "${BOLD} $(gettext "Installing %s")" "$pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz"
+  printf "${BOLD} $(gettext "Installing %s")" "$pkgname-$pkgver-$pkgrel-$CARCH${PKGEXT}"
   if [ -n "$DEPENDENCY_OF" ]; then
     printf "${DEFA} [$DEPENDENCY_OF] ... "
   else
@@ -957,7 +957,7 @@ function build_multiple_packages()
           fi
           [ "$FORCE" == "TRUE" ] && FORCE_FLAG="--force"
           launch_with_su "$PACMANBIN -U --noconfirm $FORCE_FLAG $PACMAN_FLAGS \
-            ${PKGDEST}/$pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz" &> /dev/null \
+            ${PKGDEST}/$pkgname-$pkgver-$pkgrel-$CARCH${PKGEXT}" &> /dev/null \
             || CHECK_INSTALL=1
         fi
       else
@@ -965,7 +965,7 @@ function build_multiple_packages()
       fi
       if [ $CHECK_INSTALL -eq 0 ]; then
         if [ "${#EXPORT_DIR}" -gt 0 ]; then
-          cp "${PKGDEST}/$pkgname-$pkgver-$pkgrel-$CARCH.pkg.tar.gz" "$EXPORT_DIR/"
+          cp "${PKGDEST}/$pkgname-$pkgver-$pkgrel-$CARCH${PKGEXT}" "$EXPORT_DIR/"
         fi
         rm -rf ${BUILD_DIR}/${CURRENT_PKG} &> /dev/null
         sed -i '/'${CURRENT_PKG}'/d' $LOG_FILE
@@ -1165,6 +1165,10 @@ function sysupgrade_local()
                    -e "s/-x86_64.pkg.tar.gz$//" \
                    -e "s/-any.pkg.tar.gz$//" \
                    -e "s/.pkg.tar.gz//" \
+                   -e "s/-i686.pkg.tar.xz$//" \
+                   -e "s/-x86_64.pkg.tar.xz$//" \
+                   -e "s/-any.pkg.tar.xz$//" \
+                   -e "s/.pkg.tar.xz//" \
                    -e "s/^.*\///" \
                    -e "s/-[^-]*-[^-]*$//"`)
   for PACKAGE in ${PACKAGES[@]}; do
