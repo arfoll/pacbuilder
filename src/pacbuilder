@@ -91,7 +91,6 @@ function environment()
     source ~/.${CMD_BIN}.conf
   fi
 
-  [ -z "$CARCH" ] && CARCH="i686"
   [ -z "$TMP_PATH" ] && TMP_PATH=/tmp
   [ -z "$LOG_FILE" ] && LOG_FILE=~/${CMD_BIN}-packages.log
   [ -z "$PKGDEST" ] && PKGDEST="."
@@ -374,7 +373,7 @@ function print_gcc_info()
 function print_installing()
 {
   printf "${LGRE}==>${DEFA}"
-  printf "${BOLD} $(gettext "Installing %s")" "$pkgname-$pkgver-$pkgrel-$CARCH${PKGEXT}"
+  printf "${BOLD} $(gettext "Installing %s")" "$pkgname-$pkgver-$pkgrel"
   if [ -n "$DEPENDENCY_OF" ]; then
     printf "${DEFA} [$DEPENDENCY_OF] ... "
   else
@@ -577,7 +576,7 @@ function get_pkgbuild()
   get_pkg_repo ${1}
   if [ "$REPO" != "aur" ]; then
     #abs; cp -rf /var/abs/${REPO}/${1} ${BUILD_DIR}
-    $SYNCCMD $SYNCARGS ${SYNCSERVER}::abs/${CARCH}/${REPO}/${1} ${BUILD_DIR}
+    $SYNCCMD $SYNCARGS ${SYNCSERVER}::abs/{${CARCH},any}/${REPO}/${1} ${BUILD_DIR}
     if [ ! -f ${BUILD_DIR}/${1}/PKGBUILD ]; then
       REPO="aur"
     fi
@@ -947,7 +946,7 @@ function build_multiple_packages()
           fi
           [ "$FORCE" == "TRUE" ] && FORCE_FLAG="--force"
           launch_with_su "$PACMANBIN -U --noconfirm $FORCE_FLAG $PACMAN_FLAGS \
-            ${PKGDEST}/$pkgname-$pkgver-$pkgrel-$CARCH${PKGEXT}" &> /dev/null \
+            ${PKGDEST}/$pkgname-$pkgver-$pkgrel-*${PKGEXT}" &> /dev/null \
             || CHECK_INSTALL=1
         fi
       else
@@ -955,7 +954,7 @@ function build_multiple_packages()
       fi
       if [ $CHECK_INSTALL -eq 0 ]; then
         if [ "${#EXPORT_DIR}" -gt 0 ]; then
-          cp "${PKGDEST}/$pkgname-$pkgver-$pkgrel-$CARCH${PKGEXT}" "$EXPORT_DIR/"
+          cp "${PKGDEST}/$pkgname-$pkgver-$pkgrel-*${PKGEXT}" "$EXPORT_DIR/"
         fi
         rm -rf ${BUILD_DIR}/${CURRENT_PKG} &> /dev/null
         sed -i '/'${CURRENT_PKG}'/d' $LOG_FILE
