@@ -183,6 +183,7 @@ function check_args()
           extra) add_repository "extra" ;;
           testing) add_repository "testing" ;;
           community) add_repository "community" ;;
+          community-testing) add_repository "community-testing" ;;
           aur) add_repository "aur" ;;
           repo)
           shift $(($OPTIND - 1))
@@ -356,6 +357,7 @@ function print_help()
   printf "  $(gettext "  --extra                 recompile packages in extra")\n"
   printf "  $(gettext "  --testing               recompile packages in testing")\n"
   printf "  $(gettext "  --community             recompile packages in community")\n"
+  printf "  $(gettext "  --community-testing     recompile packages in community-testing")\n"
   printf "  $(gettext "  --aur                   recompile packages in aur")\n"
 }
 
@@ -483,18 +485,6 @@ function get_aur_pkgver()
   fetch_json $1 | awk -F"-" '{ print $1 }'
 }
 
-function get_community_category()
-{
-  AUR_ID=`wget -q -O - "http://aur.archlinux.org/rpc.php?type=info&arg=${1}" \
-          | sed -e 's/^.*{"ID":"//' -e 's/",".*$//' \
-          | sed '/^$/d'`
-  CATEGORY=`wget -q -O - "http://aur.archlinux.org/packages.php?ID=${AUR_ID}" \
-            | grep 'community ::' \
-            | sed 's|<[^<]*>||g' \
-            | awk '{print $3}'`
-  echo $CATEGORY
-}
-
 function get_package_depends()
 {
   unset depends pkgname DEPS
@@ -577,6 +567,7 @@ function get_pkg_repo()
     extra) ;;
     testing) ;;
     community) ;;
+    community-testing) ;;
     *) REPO="aur" ;;
   esac
 }
@@ -585,7 +576,6 @@ function get_pkgbuild()
 {
   get_pkg_repo ${1}
   if [ "$REPO" != "aur" ]; then
-    [ "$REPO" == "community" ] && REPO=${REPO}/`get_community_category ${1}`
     #abs; cp -rf /var/abs/${REPO}/${1} ${BUILD_DIR}
     $SYNCCMD $SYNCARGS ${SYNCSERVER}::abs/${CARCH}/${REPO}/${1} ${BUILD_DIR}
     if [ ! -f ${BUILD_DIR}/${1}/PKGBUILD ]; then
@@ -1039,6 +1029,7 @@ function match_repo()
       extra) ;;
       testing) ;;
       community) ;;
+      community-testing) ;;
       *) REPO="aur" ;;
     esac
     for CURRENT_REPO in $REPO; do
